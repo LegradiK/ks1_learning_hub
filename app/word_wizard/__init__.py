@@ -7,4 +7,4 @@ bp = Blueprint(
     # so no template_folder override needed
 )
 
-from app.word_wizard import routes  # noqa: E402,F401  (register routes on bp)
+from app.word_wizard import route  # noqa: E402,F401  (register routes on bp)

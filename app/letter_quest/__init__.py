@@ -7,4 +7,4 @@ bp = Blueprint(
     # so no template_folder override needed
 )
 
-from app.letter_quest import routes  # noqa: E402,F401  (register routes on bp)
+from app.letter_quest import route  # noqa: E402,F401  (register routes on bp)
