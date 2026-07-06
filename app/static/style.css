@@ -1,0 +1,471 @@
+/* ============================================================
+   KS1 LEARNING HUB — one design system for all three games
+   Theming: <body class="theme-letters|theme-maths|theme-words|theme-hub">
+   swaps --accent / --accent-soft; every component reads from them.
+   ============================================================ */
+
+/* ---------- tokens ---------- */
+:root {
+  --bg: #FDF8EF;            /* warm paper */
+  --panel: #FFFFFF;
+  --ink: #3A2E4F;           /* deep plum — softer than black */
+  --ink-soft: #7A6F92;
+  --line: #EFE6D6;
+
+  --letters: #FF9F1C;       /* sunshine orange  */
+  --letters-soft: #FFF1DB;
+  --maths: #2EA8E0;         /* sky blue         */
+  --maths-soft: #E2F4FD;
+  --words: #9B5DE5;         /* wizard violet    */
+  --words-soft: #F1E7FC;
+  --hub: #F25C8E;           /* raspberry        */
+  --hub-soft: #FDE7EF;
+
+  --good: #3FB950;
+  --good-soft: #E4F8E7;
+  --bad: #F26D6D;
+  --bad-soft: #FDE9E9;
+
+  --accent: var(--hub);
+  --accent-soft: var(--hub-soft);
+
+  --font-display: "Fredoka", system-ui, sans-serif;
+  --font-body: "Nunito", system-ui, sans-serif;
+
+  --radius: 22px;
+  --radius-sm: 14px;
+  --shadow: 0 4px 0 rgba(58, 46, 79, 0.12);
+}
+
+.theme-letters { --accent: var(--letters); --accent-soft: var(--letters-soft); }
+.theme-maths   { --accent: var(--maths);   --accent-soft: var(--maths-soft); }
+.theme-words   { --accent: var(--words);   --accent-soft: var(--words-soft); }
+.theme-hub     { --accent: var(--hub);     --accent-soft: var(--hub-soft); }
+
+/* ---------- base ---------- */
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1.15rem;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+}
+
+h1, h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.15;
+}
+
+h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); }
+h2 { font-size: clamp(1.3rem, 3vw, 1.7rem); }
+
+.page {
+  flex: 1;
+  width: min(1000px, 100% - 2rem);
+  margin: 0 auto;
+  padding: 1.5rem 0 3rem;
+}
+
+/* focus + reduced motion — kids on tablets AND keyboards */
+:focus-visible {
+  outline: 4px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+/* ---------- jelly buttons (the signature) ----------
+   Chunky, pressable, 3D bottom edge. Everything tappable uses these. */
+.jelly-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.7rem 1.3rem;
+  min-height: 52px;                 /* generous tap target */
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 5px 0 rgba(58, 46, 79, 0.25);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.jelly-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 rgba(58, 46, 79, 0.25);
+}
+
+.btn-big { font-size: 1.35rem; padding: 0.9rem 1.8rem; }
+
+.btn-quiet {
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: 0 5px 0 var(--line);
+}
+
+/* ---------- top bar ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.8rem 1.2rem;
+  background: var(--panel);
+  border-bottom: 3px solid var(--line);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.logo-badge {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  font-size: 1.5rem;
+  background: var(--accent-soft);
+  border-radius: var(--radius-sm);
+}
+
+.difficulty-picker {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.difficulty-picker form { margin: 0; }
+
+.diff-btn {
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.4rem 1rem;
+  font-size: 0.9rem;
+  background: var(--panel);
+  color: var(--ink-soft);
+  box-shadow: 0 4px 0 var(--line);
+}
+
+.diff-emoji { font-size: 1.3rem; }
+
+.diff-btn.is-active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 0 rgba(58, 46, 79, 0.25);
+}
+
+/* ---------- hub page ---------- */
+.hub-hero {
+  text-align: center;
+  padding: 1.5rem 0 2rem;
+}
+
+.hub-sub {
+  color: var(--ink-soft);
+  font-size: 1.25rem;
+  margin: 0.5rem 0 0;
+}
+
+.subject-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.subject-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.6rem;
+  padding: 2rem 1.5rem;
+  background: var(--panel);
+  border: 3px solid var(--accent-soft);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  text-decoration: none;
+  color: var(--ink);
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+
+.subject-card:hover { transform: translateY(-4px) rotate(-0.5deg); border-color: var(--accent); }
+
+.subject-card p { margin: 0; color: var(--ink-soft); font-size: 1.05rem; }
+
+.subject-badge {
+  display: grid;
+  place-items: center;
+  width: 86px;
+  height: 86px;
+  font-size: 2.6rem;
+  background: var(--accent-soft);
+  border-radius: 30% 70% 65% 35% / 55% 40% 60% 45%;   /* wobbly sticker blob */
+  transform: rotate(-4deg);
+}
+
+.card-cta { margin-top: 0.6rem; min-width: 130px; }
+
+/* ---------- shared game page bits ---------- */
+.game-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.game-header .subject-badge { width: 68px; height: 68px; font-size: 2rem; }
+
+.game-sub { margin: 0.2rem 0 0; color: var(--ink-soft); }
+
+.score-pill {
+  margin-left: auto;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  background: var(--accent-soft);
+  padding: 0.6rem 1.2rem;
+  border-radius: 999px;
+}
+
+.game-panel {
+  background: var(--panel);
+  border: 3px solid var(--accent-soft);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+}
+
+.game-layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .game-layout { grid-template-columns: 1fr; }
+}
+
+.game-actions {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+/* ---------- letter quest ---------- */
+.letter-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 8), 1fr);
+  gap: 6px;
+}
+
+.letter-cell {
+  aspect-ratio: 1;
+  min-width: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 3vw, 1.5rem);
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--accent-soft);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.08s ease, background 0.08s ease;
+}
+
+.letter-cell:hover { transform: scale(1.08); }
+
+.letter-cell.is-selected { background: var(--accent); color: #fff; }
+.letter-cell.is-found    { background: var(--good);   color: #fff; }
+
+.word-list-panel h2 { margin-bottom: 0.8rem; }
+
+.word-chips {
+  list-style: none;
+  margin: 0 0 1.2rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.word-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  letter-spacing: 0.08em;
+  background: var(--accent-soft);
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--radius-sm);
+}
+
+.chip-emoji { font-size: 1.5rem; }
+
+.word-chip.is-found {
+  background: var(--good-soft);
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* ---------- math drill ---------- */
+.question-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.question-card {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  background: var(--accent-soft);
+  border: 3px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+}
+
+.question-card.is-right { border-color: var(--good); background: var(--good-soft); }
+.question-card.is-wrong { border-color: var(--bad);  background: var(--bad-soft); }
+
+.sum {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  white-space: nowrap;
+}
+
+.answer-input {
+  width: 90px;
+  min-height: 52px;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--ink);
+  background: var(--panel);
+  border: 3px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.answer-input:focus { border-color: var(--accent); outline: none; }
+
+/* hide number spinners — distracting for small fingers */
+.answer-input::-webkit-outer-spin-button,
+.answer-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.answer-input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+
+.result-mark { font-size: 1.4rem; min-width: 1.6rem; }
+
+/* ---------- word wizard ---------- */
+.wizard-panel { text-align: center; }
+
+.wizard-hint {
+  font-size: 1.3rem;
+  color: var(--ink-soft);
+  margin: 0 0 1.5rem;
+}
+
+.letter-slots {
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.letter-slot {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 72px;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: var(--accent-soft);
+  border-bottom: 6px solid var(--accent);
+  border-radius: var(--radius-sm) var(--radius-sm) 6px 6px;
+}
+
+.letter-slot.is-revealed { animation: pop 0.25s ease; }
+
+@keyframes pop {
+  0%   { transform: scale(0.6); }
+  70%  { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.keyboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  gap: 8px;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.keyboard.is-done { opacity: 0.4; pointer-events: none; }
+
+.key-btn {
+  min-height: 56px;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--panel);
+  border: 3px solid var(--line);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--line);
+  transition: transform 0.08s ease;
+}
+
+.key-btn:active { transform: translateY(3px); box-shadow: none; }
+
+.key-btn.is-hit  { background: var(--good-soft); border-color: var(--good); }
+.key-btn.is-miss { background: var(--bad-soft);  border-color: var(--bad); opacity: 0.6; }
+.key-btn:disabled { cursor: default; }
+
+.wizard-win {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  color: var(--good);
+  margin-top: 1.5rem;
+}
+
+/* ---------- footer ---------- */
+.footer {
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  padding: 1rem;
+}

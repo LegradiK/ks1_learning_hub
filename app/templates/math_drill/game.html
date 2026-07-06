@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Math Drill{% endblock %}
+{% block theme %}theme-maths{% endblock %}
+
+{% block content %}
+<header class="game-header">
+  <span class="subject-badge" aria-hidden="true">🔢</span>
+  <div>
+    <h1>Math Drill</h1>
+    <p class="game-sub">How many can you get right?</p>
+  </div>
+  <div class="score-pill" id="score" aria-live="polite">⭐ 0 / {{ questions|length }}</div>
+</header>
+
+<!-- Expects `questions` = list of dicts: {"a": 3, "op": "+", "b": 4, "answer": 7}
+     from generate_questions() in game_logic.py -->
+<section class="game-panel">
+  <ol class="question-list">
+    {% for q in questions %}
+    <li class="question-card" data-answer="{{ q.answer }}">
+      <span class="sum">{{ q.a }} {{ q.op }} {{ q.b }} =</span>
+      <input class="answer-input" type="number" inputmode="numeric"
+             aria-label="Answer to {{ q.a }} {{ q.op }} {{ q.b }}">
+      <span class="result-mark" aria-live="polite"></span>
+    </li>
+    {% endfor %}
+  </ol>
+
+  <div class="game-actions">
+    <button class="jelly-btn btn-big" id="check-btn">✅ Check my answers</button>
+    <a class="jelly-btn btn-quiet" href="{{ url_for('math_drill.game') }}">🔁 New questions</a>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Simple client-side marking — swap out if your game_logic checks server-side.
+  document.getElementById("check-btn").addEventListener("click", () => {
+    let right = 0;
+    const cards = document.querySelectorAll(".question-card");
+    cards.forEach(card => {
+      const input = card.querySelector(".answer-input");
+      const mark = card.querySelector(".result-mark");
+      const correct = input.value !== "" && Number(input.value) === Number(card.dataset.answer);
+      card.classList.toggle("is-right", correct);
+      card.classList.toggle("is-wrong", !correct && input.value !== "");
+      mark.textContent = correct ? "🎉" : (input.value !== "" ? "🤔" : "");
+      if (correct) right++;
+    });
+    document.getElementById("score").textContent = `⭐ ${right} / ${cards.length}`;
+  });
+</script>
+{% endblock %}

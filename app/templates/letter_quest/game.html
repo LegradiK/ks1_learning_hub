@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Letter Quest{% endblock %}
+{% block theme %}theme-letters{% endblock %}
+
+{% block content %}
+<header class="game-header">
+  <span class="subject-badge" aria-hidden="true">🔤</span>
+  <div>
+    <h1>Letter Quest</h1>
+    <p class="game-sub">Find the hidden words!</p>
+  </div>
+</header>
+
+<div class="game-layout">
+
+  <!-- The letter grid.
+       Expects `puzzle.grid` = list of rows, each a list of letters,
+       from generate_puzzle() in game_logic.py -->
+  <section class="game-panel">
+    <div class="letter-grid" style="--cols: {{ puzzle.grid[0]|length }}">
+      {% for row in puzzle.grid %}
+        {% set row_i = loop.index0 %}
+        {% for letter in row %}
+        <button class="letter-cell"
+                data-row="{{ row_i }}"
+                data-col="{{ loop.index0 }}">{{ letter }}</button>
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Words to find.
+       Expects `puzzle.words` = list of dicts: {"word": "CAT", "emoji": "🐱"}
+       (emoji optional — shown when picture_clues is on for this difficulty) -->
+  <aside class="game-panel word-list-panel">
+    <h2>Find these words</h2>
+    <ul class="word-chips">
+      {% for item in puzzle.words %}
+      <li class="word-chip" data-word="{{ item.word }}">
+        {% if item.emoji %}<span class="chip-emoji">{{ item.emoji }}</span>{% endif %}
+        <span class="chip-word">{{ item.word }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    <a class="jelly-btn btn-quiet" href="{{ url_for('letter_quest.game') }}">🔁 New puzzle</a>
+  </aside>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Hook your existing selection / word-checking JS here.
+     Cells expose data-row / data-col; chips expose data-word.
+     Add .is-found to a chip and .is-selected to cells to use the built-in styles. -->
+{% endblock %}

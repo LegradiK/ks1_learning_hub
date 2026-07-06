@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}KS1 Learning Hub{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<!-- theme-letters / theme-maths / theme-words set the accent colour per game -->
+<body class="{% block theme %}theme-hub{% endblock %}">
+
+  <nav class="topbar">
+    <a class="logo" href="{{ url_for('hub.index') }}">
+      <span class="logo-badge">🏠</span>
+      <span class="logo-text">Learning&nbsp;Hub</span>
+    </a>
+
+    <div class="difficulty-picker" aria-label="Choose difficulty">
+      {% for level in ["easy", "medium", "hard"] %}
+      <form method="post" action="{{ url_for('hub.change_difficulty', level=level) }}">
+        <button type="submit"
+                class="jelly-btn diff-btn {{ 'is-active' if difficulty == level }}"
+                aria-pressed="{{ 'true' if difficulty == level else 'false' }}">
+          <span class="diff-emoji">{{ {'easy':'🌱','medium':'🌿','hard':'🌳'}[level] }}</span>
+          <span class="diff-label">{{ level|capitalize }}</span>
+        </button>
+      </form>
+      {% endfor %}
+    </div>
+  </nav>
+
+  <main class="page">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <p>Made for curious kids ✨</p>
+  </footer>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>
