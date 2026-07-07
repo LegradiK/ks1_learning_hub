@@ -8,48 +8,80 @@
   <span class="subject-badge" aria-hidden="true">🔢</span>
   <div>
     <h1>Math Drill</h1>
-    <p class="game-sub">How many can you get right?</p>
+    <p class="game-sub">One sum at a time — how long can your streak get?</p>
   </div>
-  <div class="score-pill" id="score" aria-live="polite">⭐ 0 / {{ questions|length }}</div>
 </header>
 
-<!-- Expects `questions` = list of dicts: {"a": 3, "op": "+", "b": 4, "answer": 7}
-     from generate_questions() in game_logic.py -->
-<section class="game-panel">
-  <ol class="question-list">
-    {% for q in questions %}
-    <li class="question-card" data-answer="{{ q.answer }}">
-      <span class="sum">{{ q.a }} {{ q.op }} {{ q.b }} =</span>
-      <input class="answer-input" type="number" inputmode="numeric"
-             aria-label="Answer to {{ q.a }} {{ q.op }} {{ q.b }}">
-      <span class="result-mark" aria-live="polite"></span>
-    </li>
-    {% endfor %}
-  </ol>
+<!-- controls: type first, then that type's levels (hidden if only one), then layout -->
+<div class="md-controls">
+  <div class="control-group">
+    <span class="control-label">Sum type</span>
+    <div class="option-row">
+      {% for ct in calc_types %}
+      <a class="jelly-btn option-btn {{ 'is-active' if calc_type == ct }}"
+         href="{{ url_for('math_drill.set_type', calc_type=ct) }}">
+        {{ {'addition':'➕','subtraction':'➖','multiplication':'✖️','division':'➗'}[ct] }}
+        {{ ct|capitalize }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
 
-  <div class="game-actions">
-    <button class="jelly-btn btn-big" id="check-btn">✅ Check my answers</button>
-    <a class="jelly-btn btn-quiet" href="{{ url_for('math_drill.game') }}">🔁 New questions</a>
+  {% if levels|length > 1 %}
+  <div class="control-group">
+    <span class="control-label">Difficulty</span>
+    <div class="option-row">
+      {% for lv in levels %}
+      <a class="jelly-btn option-btn {{ 'is-active' if difficulty == lv }}"
+         href="{{ url_for('math_drill.set_difficulty', level=lv) }}">
+        {{ {'easy':'🌱','medium':'🌿','hard':'🌳','extra_hard':'🔥','random':'🎲'}.get(lv, '⭐') }}
+        {{ lv|replace('_', ' ')|capitalize }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="control-group">
+    <span class="control-label">Layout</span>
+    <div class="option-row">
+      <a class="jelly-btn option-btn {{ 'is-active' if eq_style == 'inline' }}"
+         href="{{ url_for('math_drill.set_style', style='inline') }}">↔️ In a line</a>
+      <a class="jelly-btn option-btn {{ 'is-active' if eq_style == 'stacked' }}"
+         href="{{ url_for('math_drill.set_style', style='stacked') }}">↕️ Stacked</a>
+    </div>
+  </div>
+</div>
+
+<!-- one frame for all the numbers, streak included -->
+<div class="score-bar">
+  <div class="sc"><div class="sc-val">{{ correct }}</div><div class="sc-lbl">😀 right</div></div>
+  <div class="sc"><div class="sc-val">{{ wrong }}</div><div class="sc-lbl">🙈 wrong</div></div>
+  <div class="sc"><div class="sc-val">{{ total }}</div><div class="sc-lbl">🧮 total</div></div>
+  <div class="sc sc-streak"><div class="sc-val">{{ streak }}</div><div class="sc-lbl">🔥 streak</div></div>
+</div>
+
+<section class="game-panel wizard-panel">
+
+  {% if eq_style == "stacked" %}
+  <div class="sum-stacked" aria-label="{{ num1 }} {{ op }} {{ num2 }}">
+    <span class="stack-num">{{ num1 }}</span>
+    <span class="stack-num"><span class="stack-op">{{ op }}</span>{{ num2 }}</span>
+    <span class="stack-rule"></span>
+  </div>
+  {% else %}
+  <p class="sum-big">{{ num1 }} {{ op }} {{ num2 }} = ?</p>
+  {% endif %}
+
+  <form class="answer-form" method="post" action="{{ url_for('math_drill.check_answer') }}">
+    <input class="answer-input answer-input-big" type="number" inputmode="numeric"
+           name="answer" autofocus autocomplete="off" aria-label="Your answer">
+    <button type="submit" class="jelly-btn btn-big">✅ Check</button>
+  </form>
+
+  <div class="game-actions" style="justify-content: center;">
+    <a class="jelly-btn btn-quiet" href="{{ url_for('math_drill.new_question_route') }}">🔁 Skip this one</a>
+    <a class="jelly-btn btn-quiet" href="{{ url_for('math_drill.reset') }}">🧹 Start again</a>
   </div>
 </section>
-{% endblock %}
-
-{% block scripts %}
-<script>
-  // Simple client-side marking — swap out if your game_logic checks server-side.
-  document.getElementById("check-btn").addEventListener("click", () => {
-    let right = 0;
-    const cards = document.querySelectorAll(".question-card");
-    cards.forEach(card => {
-      const input = card.querySelector(".answer-input");
-      const mark = card.querySelector(".result-mark");
-      const correct = input.value !== "" && Number(input.value) === Number(card.dataset.answer);
-      card.classList.toggle("is-right", correct);
-      card.classList.toggle("is-wrong", !correct && input.value !== "");
-      mark.textContent = correct ? "🎉" : (input.value !== "" ? "🤔" : "");
-      if (correct) right++;
-    });
-    document.getElementById("score").textContent = `⭐ ${right} / ${cards.length}`;
-  });
-</script>
 {% endblock %}

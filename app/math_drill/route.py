@@ -1,24 +1,24 @@
-"""MathDrill routes — was main.py.
+"""MathDrill routes — per-type difficulty.
 
-What changed from the standalone version:
-- @app.route -> @bp.route; url_for("index") -> url_for("math_drill.index")
-- app creation, load_dotenv, secret_key: gone — handled by the app factory
-- The local /difficulty/<level> route is REMOVED. Difficulty is now global
-  (hub.change_difficulty) and digit ranges come from get_app_settings().
-- Session keys are namespaced with "md_" so they can't collide with the
-  global session["difficulty"] or other games' state.
+Calc type is chosen first; the difficulty options shown depend on it
+(levels_for). Switching type snaps the stored level back to that type's
+default if the current one doesn't exist there (e.g. addition's
+"extra_hard" -> multiplication has no such level).
 """
 
 from flask import render_template, request, redirect, url_for, session, flash
 
 from app.math_drill import bp
-from app.math_drill.game_logic import new_question, CALC_TYPES, STYLES
-from app.core.difficulty import get_app_settings, get_difficulty
+from app.math_drill.game_logic import (
+    new_question, levels_for, default_level, CALC_TYPES, STYLES,
+)
 
 
 def _fresh_question():
-    settings = get_app_settings("math_drill")
-    return new_question(settings["digit_pairs"], session.get("md_calc_type", "addition"))
+    return new_question(
+        session.get("md_calc_type", "addition"),
+        session.get("md_difficulty"),
+    )
 
 
 def init_session():
@@ -27,19 +27,17 @@ def init_session():
     session.setdefault("md_streak", 0)
     session.setdefault("md_total", 0)
     session.setdefault("md_calc_type", "addition")
+    session.setdefault("md_difficulty", default_level(session["md_calc_type"]))
     session.setdefault("md_eq_style", "inline")
-
-    # Regenerate if there's no question yet, or if the global difficulty
-    # changed since the current question was generated.
-    if "md_question" not in session or session.get("md_level") != get_difficulty():
+    if "md_question" not in session:
         session["md_question"] = _fresh_question()
-        session["md_level"] = get_difficulty()
 
 
 @bp.route("/")
 def index():
     init_session()
     q = session["md_question"]
+    calc_type = session["md_calc_type"]
     return render_template(
         "math_drill/game.html",
         num1=q["num1"], op=q["op"], num2=q["num2"],
@@ -47,9 +45,11 @@ def index():
         wrong=session["md_wrong"],
         streak=session["md_streak"],
         total=session["md_total"],
-        calc_type=session["md_calc_type"],
+        difficulty=session["md_difficulty"],
+        calc_type=calc_type,
         eq_style=session["md_eq_style"],
         calc_types=CALC_TYPES,
+        levels=levels_for(calc_type),   # picker hidden when only 1
     )
 
 
@@ -90,6 +90,19 @@ def new_question_route():
 def set_type(calc_type):
     if calc_type in CALC_TYPES:
         session["md_calc_type"] = calc_type
+        # snap the level to this type's set if it doesn't carry over
+        if session.get("md_difficulty") not in levels_for(calc_type):
+            session["md_difficulty"] = default_level(calc_type)
+        session["md_question"] = _fresh_question()
+        session.modified = True
+    return redirect(url_for("math_drill.index"))
+
+
+@bp.route("/difficulty/<level>")
+def set_difficulty(level):
+    init_session()
+    if level in levels_for(session["md_calc_type"]):
+        session["md_difficulty"] = level
         session["md_question"] = _fresh_question()
         session.modified = True
     return redirect(url_for("math_drill.index"))

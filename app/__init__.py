@@ -4,24 +4,19 @@ import os
 
 load_dotenv("data.env")
 
+
 def create_app():
     app = Flask(__name__)
-    app.secret_key = os.getenv("FLASK_KEY")   # needed for session-based difficulty
+    app.secret_key = os.getenv("FLASK_KEY")
 
     from app.hub import bp as hub_bp
     from app.letter_quest import bp as letter_quest_bp
     from app.math_drill import bp as math_drill_bp
     from app.word_wizard import bp as word_wizard_bp
 
-    app.register_blueprint(hub_bp)                                   # serves "/"
+    app.register_blueprint(hub_bp)                                    # "/"
     app.register_blueprint(letter_quest_bp, url_prefix="/letter-quest")
     app.register_blueprint(math_drill_bp,   url_prefix="/math-drill")
     app.register_blueprint(word_wizard_bp,  url_prefix="/word-wizard")
-
-    # make current difficulty available in every template (see §4)
-    from app.core.difficulty import get_difficulty
-    @app.context_processor
-    def inject_difficulty():
-        return {"difficulty": get_difficulty()}
 
     return app

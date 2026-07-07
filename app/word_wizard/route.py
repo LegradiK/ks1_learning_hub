@@ -1,24 +1,11 @@
-"""Word Wizard routes — was main.py.
-
-What changed from the standalone version:
-- @app.route -> @bp.route; endpoints now word_wizard.game / word_wizard.stage
-- importlib file loading -> normal imports via resources/__init__.py (QUIZZES)
-- Difficulty is REMOVED from the URL. The global picker in base.html sets it;
-  routes read it with get_difficulty(). NOTE: your quiz dicts must be keyed
-  "easy" / "medium" / "hard" to match — rename keys if they differ.
-- used_words module-level dict -> session["ww_used"]. The old global was
-  shared between ALL users (one child's used words hid words from another)
-  and vanished on every server restart. Session storage is per-user.
-- Fixed two bugs: word_quiz() was called with 2 args but defined with 3,
-  and the stage route rendered "main.py" instead of the template.
-"""
+"""Word Wizard routes — difficulty is game-local, back in the URL per stage
+(each stage's quiz dict is keyed by its own difficulty levels)."""
 
 from flask import render_template, session, abort
 
 from app.word_wizard import bp
 from app.word_wizard.game_logic import pick_word
 from app.word_wizard.resources import QUIZZES
-from app.core.difficulty import get_difficulty
 
 
 @bp.route("/")
@@ -29,21 +16,21 @@ def game():
         quizzes=QUIZZES,
         question=None,
         active_id=None,
+        active_difficulty=None,
     )
 
 
-@bp.route("/stage/<stage_id>")
-def stage(stage_id):
-    if stage_id not in QUIZZES:
+@bp.route("/stage/<stage_id>/<difficulty>")
+def stage(stage_id, difficulty):
+    quiz = QUIZZES.get(stage_id)
+    if quiz is None or difficulty not in quiz:
         abort(404)
 
-    level = get_difficulty()
-    quiz = QUIZZES[stage_id]
-    all_words = quiz[level]
+    all_words = quiz[difficulty]
 
     # Per-user used-word tracking, keyed by stage + difficulty
     used_map = session.get("ww_used", {})
-    key = f"{stage_id}_{level}"
+    key = f"{stage_id}_{difficulty}"
     question, used = pick_word(all_words, used_map.get(key, []))
     used_map[key] = used
     session["ww_used"] = used_map
@@ -54,6 +41,7 @@ def stage(stage_id):
         quizzes=QUIZZES,
         question=question,
         active_id=stage_id,
+        active_difficulty=difficulty,
         resource=quiz,
     )
 
@@ -67,4 +55,5 @@ def reset():
         quizzes=QUIZZES,
         question=None,
         active_id=None,
+        active_difficulty=None,
     )

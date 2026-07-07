@@ -6,10 +6,9 @@ What changed from the standalone version:
 - Word banks now load from app/letter_quest/data/ by default, with env
   vars (WORDS_FILE / PICTURES_FILE) still honoured as overrides. Paths are
   anchored to this module, not the cwd, so they survive the move.
-- Initial mode comes from the GLOBAL difficulty: easy -> beginner
-  (picture clues), medium/hard -> advanced. The explicit /beginner and
-  /advanced routes and the ?mode= query param still override it, so the
-  existing front-end JS keeps working.
+- Difficulty is game-local: the beginner/advanced toggle in the page
+  IS this game's difficulty. Original defaults restored ("/" opens
+  beginner; the API defaults to advanced).
 - game_logic.py (build_puzzle) moves over completely unchanged.
 """
 
@@ -21,7 +20,6 @@ from flask import render_template, jsonify, request
 
 from app.letter_quest import bp
 from app.letter_quest.game_logic import build_puzzle
-from app.core.difficulty import get_app_settings
 
 _DATA_DIR = Path(__file__).parent / "data"
 
@@ -49,9 +47,7 @@ PICTURE_BANK = _load_bank("PICTURES_FILE", "pictures.json", "clue")
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
-def _render_game(initial_mode=None):
-    if initial_mode is None:
-        initial_mode = get_app_settings("letter_quest")["mode"]
+def _render_game(initial_mode="beginner"):
     return render_template(
         "letter_quest/game.html",
         topics=list(WORD_BANK.keys()),
@@ -62,7 +58,7 @@ def _render_game(initial_mode=None):
 
 @bp.route("/")
 def game():
-    return _render_game()          # mode follows the global difficulty
+    return _render_game("beginner")
 
 
 @bp.route("/beginner")
@@ -77,8 +73,7 @@ def advanced():
 
 @bp.route("/api/puzzle")
 def api_puzzle():
-    default_mode = get_app_settings("letter_quest")["mode"]
-    mode  = request.args.get("mode", default_mode)
+    mode  = request.args.get("mode", "advanced")
     bank  = PICTURE_BANK if mode == "beginner" else WORD_BANK
     topic = request.args.get("topic", "")
 

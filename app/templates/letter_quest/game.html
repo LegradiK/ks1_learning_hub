@@ -8,49 +8,375 @@
   <span class="subject-badge" aria-hidden="true">🔤</span>
   <div>
     <h1>Letter Quest</h1>
-    <p class="game-sub">Find the hidden words!</p>
+    <p class="game-sub">Pick a topic, then solve the puzzle!</p>
   </div>
+  <button class="btn-about" onclick="document.getElementById('about-modal').style.display='flex'">❓ How to</button>
 </header>
 
-<div class="game-layout">
+<div id="about-modal" class="modal-overlay" style="display:none" onclick="closeAbout(event)">
+  <div class="modal-card">
+    <button class="modal-close" onclick="document.getElementById('about-modal').style.display='none'">✕</button>
+    <h2>How to Play</h2>
 
-  <!-- The letter grid.
-       Expects `puzzle.grid` = list of rows, each a list of letters,
-       from generate_puzzle() in game_logic.py -->
-  <section class="game-panel">
-    <div class="letter-grid" style="--cols: {{ puzzle.grid[0]|length }}">
-      {% for row in puzzle.grid %}
-        {% set row_i = loop.index0 %}
-        {% for letter in row %}
-        <button class="letter-cell"
-                data-row="{{ row_i }}"
-                data-col="{{ loop.index0 }}">{{ letter }}</button>
-        {% endfor %}
-      {% endfor %}
-    </div>
-  </section>
-
-  <!-- Words to find.
-       Expects `puzzle.words` = list of dicts: {"word": "CAT", "emoji": "🐱"}
-       (emoji optional — shown when picture_clues is on for this difficulty) -->
-  <aside class="game-panel word-list-panel">
-    <h2>Find these words</h2>
-    <ul class="word-chips">
-      {% for item in puzzle.words %}
-      <li class="word-chip" data-word="{{ item.word }}">
-        {% if item.emoji %}<span class="chip-emoji">{{ item.emoji }}</span>{% endif %}
-        <span class="chip-word">{{ item.word }}</span>
-      </li>
-      {% endfor %}
+    <h3>🖼 Beginner Mode</h3>
+    <p>Look at the picture clues on the side. Each picture is a word — can you spell it?</p>
+    <ul>
+      <li>Find the number on the grid that matches the picture</li>
+      <li>Click that square and type the letters to spell the word</li>
+      <li>Words go <strong>Across →</strong> or <strong>Down ↓</strong></li>
+      <li>Press <strong>✅ Check</strong> to see if you got it right</li>
     </ul>
-    <a class="jelly-btn btn-quiet" href="{{ url_for('letter_quest.game') }}">🔁 New puzzle</a>
-  </aside>
 
+    <hr class="modal-divider">
+
+    <h3>📚 Advanced Mode</h3>
+    <p>Read the clues on the side and work out the answer.</p>
+    <ul>
+      <li>Find the matching number on the grid</li>
+      <li>Click and type your answer letter by letter</li>
+      <li>Words go <strong>Across →</strong> or <strong>Down ↓</strong></li>
+      <li>The number of letters is shown under each clue</li>
+    </ul>
+
+    <hr class="modal-divider">
+
+    <h3>🎮 Buttons</h3>
+    <ul>
+      <li><strong>🎲 New puzzle</strong> — load a fresh puzzle</li>
+      <li><strong>✅ Check</strong> — mark right and wrong letters</li>
+      <li><strong>👁 Reveal</strong> — show all the answers</li>
+      <li><strong>🗑 Clear</strong> — wipe the grid and start again</li>
+    </ul>
+  </div>
+</div>
+
+<div class="mode-toggle">
+  <button class="mode-btn {% if initial_mode == 'beginner' %}active{% endif %}" id="btn-beginner" onclick="setMode('beginner')">🖼 Beginner</button>
+  <button class="mode-btn {% if initial_mode == 'advanced' %}active{% endif %}" id="btn-advanced" onclick="setMode('advanced')">📚 Advanced</button>
+</div>
+
+<div class="controls">
+  <select id="topic-sel">
+    {% set topic_list = beginner_topics if initial_mode == 'beginner' else topics %}
+    {% for t in topic_list %}
+    <option value="{{ t }}">{{ t }}</option>
+    {% endfor %}
+  </select>
+  <button class="btn btn-new"    onclick="loadPuzzle()">🎲 New puzzle</button>
+  <button class="btn btn-check"  onclick="checkAll()">✅ Check</button>
+  <button class="btn btn-reveal" onclick="revealAll()">👁 Reveal</button>
+  <button class="btn btn-clear"  onclick="clearAll()">🗑 Clear</button>
+</div>
+
+<div class="score-bar">
+  <div class="sc"><div class="sc-val" id="sc-solved">0</div><div class="sc-lbl">solved</div></div>
+  <div class="sc"><div class="sc-val" id="sc-words">0</div><div class="sc-lbl">words</div></div>
+  <div class="sc"><div class="sc-val" id="sc-checks">0</div><div class="sc-lbl">checks</div></div>
+</div>
+
+<div id="win-banner" class="win-banner">
+  <h2>⭐ Well done! ⭐</h2>
+  <p id="win-msg"></p>
+</div>
+
+<div id="loading">Loading puzzle…</div>
+
+<div class="main" id="main" style="display:none">
+  <div class="clues-panel" id="clues"></div>
+  <div class="grid-wrap">
+    <table id="cw"></table>
+  </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<!-- Hook your existing selection / word-checking JS here.
-     Cells expose data-row / data-col; chips expose data-word.
-     Add .is-found to a chip and .is-selected to cells to use the built-in styles. -->
+<script>
+const ADVANCED_TOPICS = {{ topics | tojson }};
+const BEGINNER_TOPICS = {{ beginner_topics | tojson }};
+const PUZZLE_URL = "{{ url_for('letter_quest.api_puzzle') }}";
+
+let puzzle = null;
+let activeKey = null;
+let checks = 0;
+let solved = new Set();
+let currentMode = {{ initial_mode | tojson }};
+
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('btn-advanced').classList.toggle('active', mode === 'advanced');
+  document.getElementById('btn-beginner').classList.toggle('active', mode === 'beginner');
+
+  const topics = mode === 'beginner' ? BEGINNER_TOPICS : ADVANCED_TOPICS;
+  const sel = document.getElementById('topic-sel');
+  sel.innerHTML = topics.map(t => `<option value="${t}">${t}</option>`).join('');
+
+  if (!topics.length) {
+    document.getElementById('loading').textContent = 'No topics available for this mode yet.';
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('main').style.display = 'none';
+    return;
+  }
+  loadPuzzle();
+}
+
+async function loadPuzzle() {
+  const sel = document.getElementById('topic-sel');
+  if (!sel.options.length) return;
+
+  document.getElementById('loading').textContent = 'Loading puzzle…';
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('main').style.display = 'none';
+  document.getElementById('win-banner').style.display = 'none';
+  solved.clear(); checks = 0;
+  updateScore(0, 0);
+
+  const topic = sel.value;
+  const res = await fetch(`${PUZZLE_URL}?topic=${encodeURIComponent(topic)}&mode=${currentMode}`);
+  puzzle = await res.json();
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('main').style.display = 'flex';
+  document.getElementById('sc-words').textContent = puzzle.across.length + puzzle.down.length;
+  renderGrid();
+  renderClues();
+}
+
+function renderGrid() {
+  const tbl = document.getElementById('cw');
+  tbl.innerHTML = '';
+  const cellMap = {};
+  puzzle.cells.forEach(cell => { cellMap[`${cell.r},${cell.c}`] = cell; });
+  const numMap = {};
+  [...puzzle.across, ...puzzle.down].forEach(cl => { numMap[`${cl.row},${cl.col}`] = cl.num; });
+
+  for (let r = 0; r < puzzle.rows; r++) {
+    const tr = document.createElement('tr');
+    for (let c = 0; c < puzzle.cols; c++) {
+      const td = document.createElement('td');
+      const cell = cellMap[`${r},${c}`];
+      if (!cell || cell.empty) {
+        td.classList.add('black');
+      } else {
+        td.id = `td-${r}-${c}`;
+        const n = numMap[`${r},${c}`];
+        if (n) {
+          const sp = document.createElement('span');
+          sp.className = 'cnum'; sp.textContent = n;
+          td.appendChild(sp);
+        }
+        const inp = document.createElement('input');
+        inp.className = 'cinp';
+        inp.maxLength = 1;
+        inp.dataset.r = r; inp.dataset.c = c;
+        inp.addEventListener('mousedown', e => { e.preventDefault(); onCellClick(r, c, inp); });
+        inp.addEventListener('keydown', e => onKey(e, r, c, inp));
+        td.appendChild(inp);
+      }
+      tr.appendChild(td);
+    }
+    tbl.appendChild(tr);
+  }
+}
+
+function getInp(r, c) { return document.querySelector(`.cinp[data-r="${r}"][data-c="${c}"]`); }
+function getTd(r, c)  { return document.getElementById(`td-${r}-${c}`); }
+
+function onCellClick(r, c, inp) {
+  const hits = getCluesForCell(r, c);
+  if (!hits.length) return;
+  const cur = activeKey ? getClueByKey(activeKey) : null;
+  let target = hits[0];
+  if (cur && hits.find(h => clueKey(h) === activeKey)) {
+    const other = hits.find(h => clueKey(h) !== activeKey);
+    if (other) target = other;
+  }
+  selectClue(clueKey(target));
+  inp.focus();
+}
+
+function onKey(e, r, c, inp) {
+  if (e.key === 'Backspace') {
+    if (inp.value) { inp.value = ''; } else { moveCursor(r, c, -1); }
+    e.preventDefault(); return;
+  }
+  if (['ArrowRight','ArrowLeft','ArrowUp','ArrowDown'].includes(e.key)) {
+    const m = {ArrowRight:[0,1],ArrowLeft:[0,-1],ArrowUp:[-1,0],ArrowDown:[1,0]};
+    const [dr,dc] = m[e.key]; getInp(r+dr, c+dc)?.focus();
+    e.preventDefault(); return;
+  }
+  if (/^[a-zA-Z]$/.test(e.key)) {
+    inp.value = e.key.toUpperCase();
+    moveCursor(r, c, 1);
+    e.preventDefault();
+  }
+}
+
+function moveCursor(r, c, delta) {
+  if (!activeKey) return;
+  const cl = getClueByKey(activeKey);
+  if (!cl) return;
+  const dr = cl.dir==='D' ? 1 : 0, dc = cl.dir==='A' ? 1 : 0;
+  let idx = -1;
+  for (let i = 0; i < cl.length; i++) {
+    if (cl.row+dr*i===r && cl.col+dc*i===c) { idx=i; break; }
+  }
+  const ni = idx + delta;
+  if (ni >= 0 && ni < cl.length) getInp(cl.row+dr*ni, cl.col+dc*ni)?.focus();
+}
+
+function clueKey(cl) { return `${cl.num}${cl.dir}`; }
+
+function getClueByKey(key) {
+  const num = parseInt(key), dir = key.slice(-1);
+  return [...puzzle.across, ...puzzle.down].find(cl => cl.num===num && cl.dir===dir);
+}
+
+function getCluesForCell(r, c) {
+  return [...puzzle.across, ...puzzle.down].filter(cl => {
+    const dr = cl.dir==='D' ? 1 : 0, dc = cl.dir==='A' ? 1 : 0;
+    for (let i = 0; i < cl.length; i++) {
+      if (cl.row+dr*i===r && cl.col+dc*i===c) return true;
+    }
+    return false;
+  });
+}
+
+function selectClue(key) {
+  if (activeKey) {
+    const old = getClueByKey(activeKey);
+    if (old) clearHi(old);
+    document.getElementById(`clue-${activeKey}`)?.classList.remove('active');
+  }
+  activeKey = key;
+  const cl = getClueByKey(key);
+  if (!cl) return;
+  highlightWord(cl);
+  const el = document.getElementById(`clue-${key}`);
+  if (el) { el.classList.add('active'); el.scrollIntoView({block:'nearest'}); }
+  getInp(cl.row, cl.col)?.focus();
+}
+
+function clearHi(cl) {
+  const dr=cl.dir==='D'?1:0, dc=cl.dir==='A'?1:0;
+  for (let i=0;i<cl.length;i++) getTd(cl.row+dr*i,cl.col+dc*i)?.classList.remove('hi');
+}
+
+function highlightWord(cl) {
+  document.querySelectorAll('table#cw td:not(.black)').forEach(td=>td.classList.remove('hi'));
+  const dr=cl.dir==='D'?1:0, dc=cl.dir==='A'?1:0;
+  for (let i=0;i<cl.length;i++) {
+    const td=getTd(cl.row+dr*i,cl.col+dc*i);
+    if(td && !td.classList.contains('ok') && !td.classList.contains('err')) td.classList.add('hi');
+  }
+}
+
+function renderClues() {
+  const panel = document.getElementById('clues');
+  panel.innerHTML = '';
+  const isBeginner = puzzle.mode === 'beginner';
+
+  [['Across', puzzle.across], ['Down', puzzle.down]].forEach(([label, list]) => {
+    const col = document.createElement('div');
+    col.className = isBeginner ? 'clues-col beginner' : 'clues-col';
+    const t = document.createElement('div');
+    t.className = 'clue-section-title'; t.textContent = label;
+    col.appendChild(t);
+
+    list.forEach(cl => {
+      const key = clueKey(cl);
+      const d = document.createElement('div');
+      d.className = isBeginner ? 'clue-item beginner' : 'clue-item';
+      d.id = `clue-${key}`;
+
+      if (isBeginner) {
+        d.innerHTML = `<span class="clue-num">${cl.num}</span>
+          <span class="clue-emoji">${cl.clue}</span>`;
+      } else {
+        d.innerHTML = `<span class="clue-num">${cl.num}</span>
+          <div class="clue-body">
+            <div class="clue-txt">${cl.clue}</div>
+            <div class="clue-len">${cl.length} letters</div>
+          </div>`;
+      }
+
+      d.onclick = () => selectClue(key);
+      col.appendChild(d);
+    });
+    panel.appendChild(col);
+  });
+}
+
+function checkAll() {
+  checks++;
+  document.getElementById('sc-checks').textContent = checks;
+  [...puzzle.across, ...puzzle.down].forEach(cl => {
+    const dr=cl.dir==='D'?1:0, dc=cl.dir==='A'?1:0;
+    let wordOk = true;
+    for (let i=0;i<cl.length;i++) {
+      const inp=getInp(cl.row+dr*i,cl.col+dc*i);
+      const td=getTd(cl.row+dr*i,cl.col+dc*i);
+      if(!inp||!td) continue;
+      const correct = inp.value.toUpperCase() === cl.word[i];
+      if (inp.value) {
+        td.classList.remove('hi','ok','err');
+        td.classList.add(correct ? 'ok' : 'err');
+      }
+      if (!correct) wordOk = false;
+    }
+    const key = clueKey(cl);
+    if (wordOk) {
+      document.getElementById(`clue-${key}`)?.classList.add('done');
+      solved.add(key);
+    }
+  });
+  updateScore(solved.size, puzzle.across.length + puzzle.down.length);
+  if (solved.size === puzzle.across.length + puzzle.down.length) showWin();
+}
+
+function revealAll() {
+  [...puzzle.across, ...puzzle.down].forEach(cl => {
+    const dr=cl.dir==='D'?1:0, dc=cl.dir==='A'?1:0;
+    for (let i=0;i<cl.length;i++) {
+      const inp=getInp(cl.row+dr*i,cl.col+dc*i);
+      const td=getTd(cl.row+dr*i,cl.col+dc*i);
+      if(inp) inp.value=cl.word[i];
+      if(td){td.classList.remove('hi','err');td.classList.add('ok');}
+    }
+    document.getElementById(`clue-${clueKey(cl)}`)?.classList.add('done');
+    solved.add(clueKey(cl));
+  });
+  updateScore(solved.size, puzzle.across.length+puzzle.down.length);
+}
+
+function clearAll() {
+  document.querySelectorAll('.cinp').forEach(i=>i.value='');
+  document.querySelectorAll('table#cw td:not(.black)').forEach(td=>td.classList.remove('hi','ok','err'));
+  document.querySelectorAll('.clue-item').forEach(c=>c.classList.remove('active','done'));
+  solved.clear(); activeKey=null; checks=0;
+  updateScore(0, puzzle.across.length+puzzle.down.length);
+  document.getElementById('win-banner').style.display='none';
+}
+
+function updateScore(s, total) {
+  document.getElementById('sc-solved').textContent = s;
+  document.getElementById('sc-words').textContent  = total;
+  document.getElementById('sc-checks').textContent = checks;
+}
+
+function showWin() {
+  const banner = document.getElementById('win-banner');
+  document.getElementById('win-msg').textContent =
+    `You solved all ${solved.size} words in ${checks} check${checks!==1?'s':''}!`;
+  banner.style.display = 'block';
+  banner.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+function closeAbout(e) {
+  if (e.target === document.getElementById('about-modal'))
+    document.getElementById('about-modal').style.display = 'none';
+}
+
+document.getElementById('topic-sel').addEventListener('change', loadPuzzle);
+loadPuzzle();
+</script>
 {% endblock %}

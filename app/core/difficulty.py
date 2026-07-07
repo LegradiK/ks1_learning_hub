@@ -24,14 +24,16 @@ DEFAULT = "easy"
 # your game_logic functions accept.
 SETTINGS = {
     "letter_quest": {
-        "easy":   {"grid_size": 8,  "max_word_len": 4, "picture_clues": True},
-        "medium": {"grid_size": 10, "max_word_len": 6, "picture_clues": True},
-        "hard":   {"grid_size": 12, "max_word_len": 8, "picture_clues": False},
+        "easy":   {"mode": "beginner"},
+        "medium": {"mode": "advanced"},
+        "hard":   {"mode": "advanced"},
     },
     "math_drill": {
-        "easy":   {"max_number": 10,  "operations": ["+"],           "num_questions": 6,  "time_limit": None},
-        "medium": {"max_number": 20,  "operations": ["+", "-"],      "num_questions": 8,  "time_limit": 60},
-        "hard":   {"max_number": 100, "operations": ["+", "-", "x"], "num_questions": 10, "time_limit": 45},
+        # digit_pairs feeds game_logic.new_question(); one pair is picked
+        # at random per question, so a level can mix number sizes.
+        "easy":   {"digit_pairs": [((1, 9),   (1, 9))]},
+        "medium": {"digit_pairs": [((1, 9),   (10, 99)), ((10, 99), (1, 9))]},
+        "hard":   {"digit_pairs": [((10, 99), (10, 99)), ((100, 999), (100, 999))]},
     },
     "word_wizard": {
         # `bank` names which word bank game_logic should draw from
