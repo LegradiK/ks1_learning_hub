@@ -10,7 +10,14 @@
     <h1>Math Drill</h1>
     <p class="game-sub">One sum at a time — how long can your streak get?</p>
   </div>
+  <div class="score-bar">
+    <div class="sc"><div class="sc-val">{{ correct }}</div><div class="sc-lbl">😀 right</div></div>
+    <div class="sc"><div class="sc-val">{{ wrong }}</div><div class="sc-lbl">🙈 wrong</div></div>
+    <div class="sc"><div class="sc-val">{{ total }}</div><div class="sc-lbl">🧮 total</div></div>
+    <div class="sc sc-streak"><div class="sc-val">{{ streak }}</div><div class="sc-lbl">🔥 streak</div></div>
+  </div>
 </header>
+
 
 <!-- controls: type first, then that type's levels (hidden if only one), then layout -->
 <div class="md-controls">
@@ -51,14 +58,6 @@
          href="{{ url_for('math_drill.set_style', style='stacked') }}">↕️ Stacked</a>
     </div>
   </div>
-</div>
-
-<!-- one frame for all the numbers, streak included -->
-<div class="score-bar">
-  <div class="sc"><div class="sc-val">{{ correct }}</div><div class="sc-lbl">😀 right</div></div>
-  <div class="sc"><div class="sc-val">{{ wrong }}</div><div class="sc-lbl">🙈 wrong</div></div>
-  <div class="sc"><div class="sc-val">{{ total }}</div><div class="sc-lbl">🧮 total</div></div>
-  <div class="sc sc-streak"><div class="sc-val">{{ streak }}</div><div class="sc-lbl">🔥 streak</div></div>
 </div>
 
 <section class="game-panel wizard-panel">

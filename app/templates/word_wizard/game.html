@@ -5,84 +5,66 @@
 
 {% block content %}
 <header class="game-header">
-  <span class="subject-badge" aria-hidden="true">🪄</span>
+  <img src="{{ url_for('static', filename='wizard.png') }}" style="width:3em;height:3em;vertical-align:middle;margin-left:1rem;">
   <div>
     <h1>Word Wizard</h1>
-    <p class="game-sub">Guess the magic word!</p>
+    <p class="game-sub">Listen carefully, then spell what you hear!</p>
   </div>
-  <div class="score-pill" id="hints-left" aria-live="polite">💡 Hints: {{ hints }}</div>
 </header>
 
-<!-- Expects from game_logic.py:
-       `word`  = the secret word, e.g. "FROG"
-       `hint`  = a clue string, e.g. "A green animal that hops"
-       `hints` = number of hints allowed (from difficulty settings) -->
-<section class="game-panel wizard-panel">
+<div class="stage-tabs">
+    <button class="tab-btn active" onclick="switchStage(1)">⭐ Stage 1 – Tricky Words</button>
+    <button class="tab-btn" onclick="switchStage(2)">✨ Stage 2 – Vocabulary</button>
+    <button class="tab-btn" onclick="switchStage(3)">🌟 Stage 3 – Top Frequent Words</button>
+    <button class="tab-btn" onclick="switchStage(4)">🌠 Stage 4 – Fill the Sentence</button>
+</div>
 
-  <p class="wizard-hint">💭 {{ hint }}</p>
+<div class="difficulty-and-voices">
+    <label class="diff-label">Difficulties: </label>
+    <div class="diff-btns">
+        <button class="diff-btn active" data-difficulty="reception" onclick="switchDifficulty(event, 'reception')">🌱 Reception</button>
+        <button class="diff-btn" data-difficulty="year1" onclick="switchDifficulty(event, 'year1')">📗 Year 1</button>
+        <button class="diff-btn" data-difficulty="year2" onclick="switchDifficulty(event, 'year2')">📘 Year 2</button>
+        <button class="diff-btn" data-difficulty="all" onclick="switchDifficulty(event, 'all')">
+            <img src="{{ url_for('static', filename='spellbook.png') }}" style="width:1em;height:1em;vertical-align:middle;"> All
+        </button>
+    </div>
+    <label class="voice-label">Voice: </label>
+    <div class="voice-btns">
+        <button class="speech-voice-btn" data-voice="man" onclick="switchVoices(event, 'man')">
+            <img src="{{ url_for('static', filename='man.png') }}" style="width:1em;height:1em;vertical-align:middle;"> Man
+        </button>
+        <button class="speech-voice-btn active" data-voice="woman" onclick="switchVoices(event, 'woman')">
+            <img src="{{ url_for('static', filename='woman.png') }}" style="width:1em;height:1em;vertical-align:middle;"> Woman
+        </button>
+    </div>
+</div>
 
-  <div class="letter-slots" id="slots" data-word="{{ word }}">
-    {% for letter in word %}
-    <span class="letter-slot" data-letter="{{ letter }}"></span>
-    {% endfor %}
-  </div>
-
-  <div class="keyboard" id="keyboard">
-    {% for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
-    <button class="key-btn" data-key="{{ letter }}">{{ letter }}</button>
-    {% endfor %}
-  </div>
-
-  <div class="game-actions">
-    <button class="jelly-btn btn-quiet" id="hint-btn">💡 Use a hint</button>
-    <a class="jelly-btn btn-quiet" href="{{ url_for('word_wizard.game') }}">🔁 New word</a>
-  </div>
-
-  <p class="wizard-win" id="win-msg" hidden>🎉 You did it! You're a Word Wizard! 🎉</p>
-</section>
+<div class="card">
+<!-- ===== STAGE 1 ===== -->
+    <div class="stage-panel active" id="stage1">
+    {% include 'word_wizard/stage1.html' %}
+    </div>
+<!-- ===== STAGE 2 ===== -->
+    <div class="stage-panel" id="stage2">
+    {% include 'word_wizard/stage2.html' %}
+    </div>
+<!-- ===== STAGE 3 ===== -->
+    <div class="stage-panel" id="stage3">
+    {% include 'word_wizard/stage3.html' %}
+    </div>
+<!-- ===== STAGE 4 ===== -->
+    <div class="stage-panel" id="stage4">
+    {% include 'word_wizard/stage4.html' %}
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-  // Placeholder guessing logic — replace with your game_logic-driven version if preferred.
-  const slots = [...document.querySelectorAll(".letter-slot")];
-  let hintsLeft = {{ hints }};
-
-  function reveal(letter) {
-    let hit = false;
-    slots.forEach(s => {
-      if (s.dataset.letter === letter && !s.textContent) {
-        s.textContent = letter;
-        s.classList.add("is-revealed");
-        hit = true;
-      }
-    });
-    return hit;
-  }
-
-  function checkWin() {
-    if (slots.every(s => s.textContent)) {
-      document.getElementById("win-msg").hidden = false;
-      document.getElementById("keyboard").classList.add("is-done");
-    }
-  }
-
-  document.getElementById("keyboard").addEventListener("click", e => {
-    const btn = e.target.closest(".key-btn");
-    if (!btn || btn.disabled) return;
-    btn.disabled = true;
-    btn.classList.add(reveal(btn.dataset.key) ? "is-hit" : "is-miss");
-    checkWin();
-  });
-
-  document.getElementById("hint-btn").addEventListener("click", () => {
-    if (hintsLeft <= 0) return;
-    const hidden = slots.find(s => !s.textContent);
-    if (!hidden) return;
-    hintsLeft--;
-    document.getElementById("hints-left").textContent = `💡 Hints: ${hintsLeft}`;
-    reveal(hidden.dataset.letter);
-    checkWin();
-  });
+  // Full word banks for the client-side game.
+  // If your JS uses a different variable name, rename this to match.
+  const QUIZZES = {{ quizzes | tojson }};
 </script>
+<script src="{{ url_for('static', filename='js/word_wizard.js') }}"></script>
 {% endblock %}

@@ -18,6 +18,25 @@
       <span class="logo-text">Learning&nbsp;Hub</span>
     </a>
 
+    <div class="nav-menus">
+      <details class="nav-dropdown">
+        <summary class="nav-btn">🎮 Games</summary>
+        <div class="dropdown-menu">
+          <a class="dropdown-item" href="{{ url_for('letter_quest.game') }}">🔤 Letter Quest</a>
+          <a class="dropdown-item" href="{{ url_for('math_drill.index') }}">🔢 Math Drill</a>
+          <a class="dropdown-item" href="{{ url_for('word_wizard.game') }}"><img src="{{ url_for('static', filename='wizard.png') }}" style="width:1em;height:1em;vertical-align:middle;"> Word Wizard</a>
+        </div>
+      </details>
+
+      <details class="nav-dropdown">
+        <summary class="nav-btn">❓ How to play</summary>
+        <div class="dropdown-menu">
+          <button class="dropdown-item" onclick="openHowto('letter-quest')">🔤 Letter Quest</button>
+          <button class="dropdown-item" onclick="openHowto('math-drill')">🔢 Math Drill</button>
+          <button class="dropdown-item" onclick="openHowto('word-wizard')"><img src="{{ url_for('static', filename='wizard.png') }}" style="width:1em;height:1em;vertical-align:middle;"> Word Wizard</button>
+        </div>
+      </details>
+    </div>
   </nav>
 
   <main class="page">
@@ -34,9 +53,93 @@
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="footer">
-    <p>Made for curious kids ✨</p>
-  </footer>
+  <!-- how-to-play popup: one overlay, one page per game -->
+  <div id="howto-modal" class="modal-overlay" style="display:none"
+       onclick="if (event.target === this) closeHowto()">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeHowto()">✕</button>
+
+      <div class="howto-page" id="howto-letter-quest" style="display:none">
+        <h2>🔤 Letter Quest</h2>
+
+        <h3>🖼 Beginner Mode</h3>
+        <p>Look at the picture clues on the side. Each picture is a word — can you spell it?</p>
+        <ul>
+          <li>Find the number on the grid that matches the picture</li>
+          <li>Click that square and type the letters to spell the word</li>
+          <li>Words go <strong>Across →</strong> or <strong>Down ↓</strong></li>
+          <li>Press <strong>✅ Check</strong> to see if you got it right</li>
+        </ul>
+
+        <hr class="modal-divider">
+
+        <h3>📚 Advanced Mode</h3>
+        <p>Read the clues on the side and work out the answer.</p>
+        <ul>
+          <li>Find the matching number on the grid</li>
+          <li>Click and type your answer letter by letter</li>
+          <li>The number of letters is shown under each clue</li>
+        </ul>
+
+        <hr class="modal-divider">
+
+        <h3>🎮 Buttons</h3>
+        <ul>
+          <li><strong>🎲 New puzzle</strong> — load a fresh puzzle</li>
+          <li><strong>✅ Check</strong> — mark right and wrong letters</li>
+          <li><strong>👁 Reveal</strong> — show all the answers</li>
+          <li><strong>🗑 Clear</strong> — wipe the grid and start again</li>
+        </ul>
+      </div>
+
+      <div class="howto-page" id="howto-math-drill" style="display:none">
+        <h2>🔢 Math Drill</h2>
+        <ul>
+          <li>Pick a <strong>sum type</strong> first — some types then offer difficulty levels</li>
+          <li>Type your answer and press <strong>✅ Check</strong></li>
+          <li>Get sums right in a row to build your 🔥 <strong>streak</strong></li>
+          <li><strong>🔁 Skip</strong> swaps the sum; <strong>🧹 Start again</strong> resets your score</li>
+        </ul>
+      </div>
+
+      <div class="howto-page" id="howto-word-wizard" style="display:none">
+        <h2><img src="{{ url_for('static', filename='wizard.png') }}" style="width:1em;height:1em;vertical-align:middle;"> Word Wizard</h2>
+        <ul>
+          <li>Pick a <strong>stage</strong> and a difficulty</li>
+          <li>Listen to the word, then spell it out</li>
+          <li>You won't see the same word twice until you've done them all</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+<footer class="footer">
+  Learning Hub for KS1 Children &copy;2026 by
+  <a href="https://github.com/LegradiK" target="_blank" rel="noopener noreferrer">LegradiK</a>
+  All rights reserved.
+</footer>
+
+  <script>
+    function openHowto(game) {
+      document.querySelectorAll('.howto-page').forEach(p => p.style.display = 'none');
+      document.getElementById(`howto-${game}`).style.display = 'block';
+      document.getElementById('howto-modal').style.display = 'flex';
+      document.querySelectorAll('.nav-dropdown').forEach(d => d.removeAttribute('open'));
+    }
+    function closeHowto() {
+      document.getElementById('howto-modal').style.display = 'none';
+    }
+    // close dropdowns when clicking elsewhere, and modal on Escape
+    document.addEventListener('click', e => {
+      document.querySelectorAll('.nav-dropdown[open]').forEach(d => {
+        if (!d.contains(e.target)) d.removeAttribute('open');
+      });
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeHowto();
+    });
+  </script>
 
   {% block scripts %}{% endblock %}
 </body>

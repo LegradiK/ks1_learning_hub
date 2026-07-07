@@ -633,81 +633,8 @@ table#cw td.err { border-color: var(--bad);    background: var(--bad-soft); }
 
 .result-mark { font-size: 1.4rem; min-width: 1.6rem; }
 
-/* ---------- word wizard ---------- */
+/* ---------- wizard-panel (centered game panel, used by math drill) ---------- */
 .wizard-panel { text-align: center; }
-
-.wizard-hint {
-  font-size: 1.3rem;
-  color: var(--ink-soft);
-  margin: 0 0 1.5rem;
-}
-
-.letter-slots {
-  display: flex;
-  justify-content: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  margin-bottom: 2rem;
-}
-
-.letter-slot {
-  display: grid;
-  place-items: center;
-  width: 64px;
-  height: 72px;
-  font-family: var(--font-display);
-  font-size: 2rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  background: var(--accent-soft);
-  border-bottom: 6px solid var(--accent);
-  border-radius: var(--radius-sm) var(--radius-sm) 6px 6px;
-}
-
-.letter-slot.is-revealed { animation: pop 0.25s ease; }
-
-@keyframes pop {
-  0%   { transform: scale(0.6); }
-  70%  { transform: scale(1.15); }
-  100% { transform: scale(1); }
-}
-
-.keyboard {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
-  gap: 8px;
-  max-width: 620px;
-  margin: 0 auto;
-}
-
-.keyboard.is-done { opacity: 0.4; pointer-events: none; }
-
-.key-btn {
-  min-height: 56px;
-  font-family: var(--font-display);
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: var(--ink);
-  background: var(--panel);
-  border: 3px solid var(--line);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  box-shadow: 0 4px 0 var(--line);
-  transition: transform 0.08s ease;
-}
-
-.key-btn:active { transform: translateY(3px); box-shadow: none; }
-
-.key-btn.is-hit  { background: var(--good-soft); border-color: var(--good); }
-.key-btn.is-miss { background: var(--bad-soft);  border-color: var(--bad); opacity: 0.6; }
-.key-btn:disabled { cursor: default; }
-
-.wizard-win {
-  font-family: var(--font-display);
-  font-size: 1.6rem;
-  color: var(--good);
-  margin-top: 1.5rem;
-}
 
 /* ---------- footer ---------- */
 .footer {
@@ -856,3 +783,398 @@ table#cw td.err { border-color: var(--bad);    background: var(--bad-soft); }
   background: #FFE4C4;
   border: 3px solid var(--accent);
 }
+
+/* score bar inside the header row: right-aligned, compact */
+.game-header .score-bar {
+  margin-left: auto;
+  margin-bottom: 0;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.game-header .sc { padding: 0.3rem 0.9rem; }
+.game-header .sc-val { font-size: 1.2rem; }
+.game-header .sc-lbl { font-size: 0.75rem; }
+
+/* ---------- topbar dropdown menus ---------- */
+.nav-menus {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.nav-dropdown {
+  position: relative;
+}
+
+.nav-btn {
+  list-style: none;                 /* hide the details marker */
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--panel);
+  border: 3px solid var(--line);
+  border-radius: 999px;
+  padding: 0.5rem 1.1rem;
+  min-height: 48px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--line);
+  user-select: none;
+}
+
+.nav-btn::-webkit-details-marker { display: none; }
+
+.nav-dropdown[open] .nav-btn {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 220px;
+  background: var(--panel);
+  border: 3px solid var(--accent-soft);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 6px 0 rgba(58, 46, 79, 0.15);
+  padding: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  z-index: 50;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: none;
+  border: none;
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+  min-height: 48px;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: left;
+}
+
+.dropdown-item:hover { background: var(--accent-soft); }
+
+.howto-page h3 { font-family: var(--font-display); margin: 1rem 0 0.3rem; }
+
+/* ============================================================
+   WORD WIZARD — listen & spell (client-side tabs)
+   Panels/completions are toggled by the game JS; CSS supplies
+   sensible defaults (only .active panels visible).
+   ============================================================ */
+
+/* stage tabs */
+.stage-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tab-btn {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background: var(--panel);
+  border: 3px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 1rem;
+  min-height: 52px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--line);
+  transition: transform 0.08s ease;
+}
+
+.tab-btn:active { transform: translateY(3px); box-shadow: none; }
+
+.tab-btn.active {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 4px 0 rgba(58, 46, 79, 0.25);
+}
+
+/* difficulty + voice row */
+.difficulty-and-voices {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.diff-label,
+.voice-label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.voice-label { margin-left: 0.8rem; }
+
+.diff-btns,
+.voice-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.diff-btn,
+.speech-voice-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--panel);
+  border: 3px solid var(--line);
+  border-radius: 999px;
+  padding: 0.4rem 0.9rem;
+  min-height: 46px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--line);
+  transition: transform 0.08s ease;
+}
+
+.diff-btn:active,
+.speech-voice-btn:active { transform: translateY(3px); box-shadow: none; }
+
+.diff-btn.active,
+.speech-voice-btn.active {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 4px 0 rgba(58, 46, 79, 0.25);
+}
+
+/* game card + stage panels (JS switches .active) */
+.card {
+  background: var(--panel);
+  border: 3px solid var(--accent-soft);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+}
+
+.stage-panel { display: none; }
+.stage-panel.active { display: block; }
+
+.main-content { text-align: center; }
+
+/* progress row */
+.progress-area {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1.2rem;
+}
+
+.progress-label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.progress-bar {
+  flex: 1;
+  height: 18px;
+  background: var(--accent-soft);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.score-badge {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  background: var(--accent-soft);
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.instruction {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--ink-soft);
+  margin: 0 0 1rem;
+}
+
+/* big action buttons, colour-coded by job */
+.big-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.8rem 1.6rem;
+  min-height: 58px;
+  cursor: pointer;
+  box-shadow: 0 5px 0 rgba(58, 46, 79, 0.25);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  margin-bottom: 1rem;
+}
+
+.big-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 rgba(58, 46, 79, 0.25);
+}
+
+.big-btn:disabled { cursor: default; }
+
+.btn-listen { background: var(--accent); }
+.btn-reveal { background: var(--ink-soft); }
+.btn-next   { background: var(--good); }
+
+.btn-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+/* typing area */
+.spelling-input-area { margin: 0.5rem 0 1.2rem; }
+
+.spelling-label {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin-bottom: 0.5rem;
+}
+
+.spelling-input {
+  width: min(320px, 100%);
+  min-height: 60px;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--ink);
+  background: var(--panel);
+  border: 3px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.spelling-input:focus { border-color: var(--accent); outline: none; }
+
+/* reveal area + letter tiles (tiles are created by the JS) */
+.word-reveal { margin-bottom: 1.2rem; }
+
+.word-hint {
+  font-size: 1rem;
+  color: var(--ink-soft);
+}
+
+.word-text {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  margin: 0.4rem 0;
+}
+
+.letter-tiles {
+  display: flex;
+  justify-content: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin: 0.6rem 0;
+}
+
+.letter-tiles > * {
+  display: grid;
+  place-items: center;
+  min-width: 52px;
+  height: 60px;
+  padding: 0 0.4rem;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: var(--accent-soft);
+  border-bottom: 5px solid var(--accent);
+  border-radius: var(--radius-sm) var(--radius-sm) 6px 6px;
+  animation: pop 0.25s ease;
+}
+
+/* stage 4: sentence with a gap */
+.sentence-display {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  line-height: 1.5;
+  background: var(--accent-soft);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.2rem;
+  margin: 0 auto 1.2rem;
+  max-width: 640px;
+}
+
+/* feedback + word dots (dots created by the JS) */
+.feedback {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  min-height: 1.6em;
+  margin: 0.8rem 0;
+}
+
+.word-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.8rem;
+}
+
+.word-dots > * {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+/* completion screen (JS shows it when the stage is finished) */
+.completion {
+  display: none;
+  text-align: center;
+  padding: 1.5rem 0;
+}
+
+.completion.active,
+.completion.show { display: block; }
+
+.completion-emoji { font-size: 3.5rem; }
+
+.completion h2 { color: var(--good); margin: 0.4rem 0; }
+
+.stars { font-size: 1.8rem; margin-top: 0.5rem; }

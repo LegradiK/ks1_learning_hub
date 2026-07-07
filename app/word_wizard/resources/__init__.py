@@ -1,9 +1,8 @@
 """Word bank registry for Word Wizard.
 
-Each resource module defines a dict called `quiz`, keyed by difficulty.
-Normal imports replace the old importlib.util file loading: the banks are
-loaded ONCE at startup instead of being re-executed on every request,
-and paths can't break regardless of where the app is run from.
+Each resource module defines a dict called `quiz`, keyed by difficulty
+(reception / year1 / year2 / all). Loaded once at startup via normal
+imports and embedded into the page as JSON for the client-side game.
 """
 
 from app.word_wizard.resources.tricky_words import quiz as _tricky_words
