@@ -25,6 +25,7 @@
           <a class="dropdown-item" href="{{ url_for('word_wizard.game') }}"><img src="{{ url_for('static', filename='wizard.png') }}" style="width:1em;height:1em;vertical-align:middle;"> Word Wizard</a>
           <a class="dropdown-item" href="{{ url_for('math_drill.index') }}">🔢 Math Drill</a>
           <a class="dropdown-item" href="{{ url_for('letter_quest.game') }}">🔤 Letter Quest</a> 
+          <a class="dropdown-item" href="{{ url_for('sudoku.game') }}">🧩 Sudoku</a>
         </div>
       </details>
 
@@ -34,6 +35,7 @@
           <button class="dropdown-item" onclick="openHowto('word-wizard')"><img src="{{ url_for('static', filename='wizard.png') }}" style="width:1em;height:1em;vertical-align:middle;"> Word Wizard</button>
           <button class="dropdown-item" onclick="openHowto('math-drill')">🔢 Math Drill</button>
           <button class="dropdown-item" onclick="openHowto('letter-quest')">🔤 Letter Quest</button>
+          <button class="dropdown-item" onclick="openHowto('sudoku')">🧩 Sudoku</button>
         </div>
       </details>
     </div>
@@ -113,6 +115,18 @@
           <li>Press <strong>🔊 Listen</strong> to hear your word — you can listen as many times as you like</li>
           <li>Type your spelling, then click <strong>👀 Reveal</strong> or press <strong>Enter</strong> to see how you did, letter by letter</li>
           <li>Right answers build your 🔥 streak — and no word repeats until you've beaten them all!</li>
+        </ul>
+      </div>
+
+      <div class="howto-page" id="howto-sudoku" style="display:none">
+        <h2>🧩 Sudoku</h2>
+        <p>A number puzzle — every row, column and box needs 1, 2, 3 and 4, with no repeats!</p>
+        <ul>
+          <li>The shaded numbers are clues — they can't be changed</li>
+          <li>Tap an empty square and type a number from <strong>1 to 4</strong></li>
+          <li>Use the <strong>arrow keys</strong> to move around, and <strong>Backspace</strong> to rub one out</li>
+          <li>Filled every square? Press <strong>✅ Check</strong> or hit <strong>Enter</strong> — red squares need another look!</li>
+          <li><strong>🎲 New game</strong> deals a fresh puzzle; <strong>🔄 Restart</strong> clears your answers but keeps the clues</li>
         </ul>
       </div>
 

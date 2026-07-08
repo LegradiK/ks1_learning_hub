@@ -13,10 +13,12 @@ def create_app():
     from app.letter_quest import bp as letter_quest_bp
     from app.math_drill import bp as math_drill_bp
     from app.word_wizard import bp as word_wizard_bp
+    from app.sudoku import bp as sudoku_bp
 
     app.register_blueprint(hub_bp)                                    # "/"
     app.register_blueprint(letter_quest_bp, url_prefix="/letter-quest")
     app.register_blueprint(math_drill_bp,   url_prefix="/math-drill")
     app.register_blueprint(word_wizard_bp,  url_prefix="/word-wizard")
+    app.register_blueprint(sudoku_bp, url_prefix="/sudoku")
 
     return app

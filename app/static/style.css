@@ -641,6 +641,109 @@ table#cw td.err { border-color: var(--bad);    background: var(--bad-soft); }
 /* ---------- wizard-panel (centered game panel, used by math drill) ---------- */
 .wizard-panel { text-align: center; }
 
+/* ---------- sudoku ---------- */
+.sudoku-layout {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.sudoku-wrap {
+  background: var(--panel);
+  border: 3px solid var(--accent-soft);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.2rem;
+}
+
+table#sd-grid { border-collapse: collapse; }
+
+table#sd-grid td {
+  width: clamp(64px, 12vw, 92px);
+  height: clamp(64px, 12vw, 92px);
+  text-align: center;
+  border: 2px solid var(--line);
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  font-weight: 700;
+  transition: background 0.1s ease;
+}
+
+/* thick outer frame + 2x2 box dividers */
+table#sd-grid td.box-right  { border-right: 5px solid var(--ink); }
+table#sd-grid td.box-bottom { border-bottom: 5px solid var(--ink); }
+table#sd-grid tr:first-child td { border-top: 5px solid var(--ink); }
+table#sd-grid tr:last-child td  { border-bottom: 5px solid var(--ink); }
+table#sd-grid td:first-child { border-left: 5px solid var(--ink); }
+table#sd-grid td:last-child  { border-right: 5px solid var(--ink); }
+
+table#sd-grid td.given { background: var(--accent-soft); color: var(--ink); }
+table#sd-grid td.lane  { background: #F2FBF7; }         /* soft row/col hint */
+table#sd-grid td.given.lane { background: var(--accent-soft); }
+table#sd-grid td.sel   { box-shadow: inset 0 0 0 4px var(--accent); }
+table#sd-grid td.ok    { background: var(--good-soft); }
+table#sd-grid td.err   { background: var(--bad-soft); }
+table#sd-grid td.err .sd-inp { color: var(--bad); }
+
+table#sd-grid td.popped .sd-inp { animation: pop 0.25s ease; }
+
+.sd-inp {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--ink);
+  caret-color: transparent;
+  cursor: pointer;
+}
+.sd-inp:focus { outline: none; }   /* the .sel ring is the focus indicator */
+
+/* number pad — chunky jelly keys for tablet fingers */
+.num-pad {
+  display: grid;
+  grid-template-columns: repeat(2, 76px);
+  gap: 0.6rem;
+}
+
+.num-btn {
+  height: 76px;
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--panel);
+  border: 3px solid var(--accent-soft);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: 0 5px 0 rgba(58, 46, 79, 0.18);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.num-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 rgba(58, 46, 79, 0.18);
+}
+
+.num-btn:hover { border-color: var(--accent); }
+
+.num-erase { grid-column: 1 / -1; background: var(--bad-soft); border-color: var(--bad); }
+
+@media (max-width: 640px) {
+  .num-pad { grid-template-columns: repeat(5, 1fr); width: 100%; }
+  .num-erase { grid-column: auto; }
+}
+
+.btn-hint { background: var(--words); }                 /* wizard violet */
+table#sd-grid td.hinted .sd-inp { color: var(--words); }
+table#sd-grid td.hinted.ok .sd-inp,
+table#sd-grid td.hinted.err .sd-inp { color: inherit; } /* check verdict wins */
+
 /* ---------- footer ---------- */
 .footer {
   text-align: center;

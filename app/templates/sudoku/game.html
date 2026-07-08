@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}Sudoku{% endblock %}
+{% block theme %}theme-sudoku{% endblock %}
+
+{% block content %}
+<header class="game-header">
+  <span class="subject-badge" aria-hidden="true">🧩</span>
+  <div>
+    <h1>Sudoku</h1>
+    <p class="game-sub">Fill every row, column and box with 1 to 4!</p>
+  </div>
+  <div class="score-bar">
+    <div class="sc sc-streak"><div class="sc-val" id="sd-solved">0</div><div class="sc-lbl">🏆 solved</div></div>
+    <div class="sc"><div class="sc-val" id="sd-checks">0</div><div class="sc-lbl">🔍 checks</div></div>
+  </div>
+</header>
+
+<div class="controls">
+  <button class="btn btn-new"    onclick="newGame()">🎲 New game</button>
+  <button class="btn btn-check"  onclick="checkBoard()">✅ Check</button>
+  <button class="btn btn-hint"   onclick="revealCell()">💡 Reveal</button>
+  <button class="btn btn-clear"  onclick="restartGame()">🔄 Restart</button>
+</div>
+
+<div id="win-banner" class="win-banner">
+  <h2>⭐ Puzzle solved! ⭐</h2>
+  <p>Amazing work — try another one!</p>
+</div>
+
+<div class="feedback" id="sd-feedback"></div>
+
+<div id="loading">Loading puzzle…</div>
+
+<div class="sudoku-layout" id="sudoku-main" style="display:none">
+  <div class="sudoku-wrap">
+    <table id="sd-grid"></table>
+  </div>
+
+  <!-- tap-friendly number pad: perfect for tablets, optional for keyboards -->
+  <div class="num-pad" aria-label="Number pad">
+    <button class="num-btn" onclick="padPress(1)">1</button>
+    <button class="num-btn" onclick="padPress(2)">2</button>
+    <button class="num-btn" onclick="padPress(3)">3</button>
+    <button class="num-btn" onclick="padPress(4)">4</button>
+    <button class="num-btn num-erase" onclick="padPress(0)">⌫</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const PUZZLE_URL = "{{ url_for('sudoku.api_puzzle') }}";
+const SIZE = 4;
+
+let puzzle = null;
+let solvedCount = 0;
+let checks = 0;
+let sel = { r: 0, c: 0 };   // currently selected cell (input cells only)
+
+async function newGame() {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('sudoku-main').style.display = 'none';
+  document.getElementById('win-banner').style.display = 'none';
+  document.getElementById('sd-feedback').className = 'feedback';
+
+  const res = await fetch(PUZZLE_URL);
+  puzzle = await res.json();
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('sudoku-main').style.display = 'flex';
+  renderGrid();
+}
+
+function renderGrid() {
+  const tbl = document.getElementById('sd-grid');
+  tbl.innerHTML = '';
+
+  for (let r = 0; r < SIZE; r++) {
+    const tr = document.createElement('tr');
+    for (let c = 0; c < SIZE; c++) {
+      const td = document.createElement('td');
+      td.id = `sd-td-${r}-${c}`;
+      if (r === 1) td.classList.add('box-bottom');
+      if (c === 1) td.classList.add('box-right');
+
+      const given = puzzle.grid[r][c];
+      if (given !== 0) {
+        td.classList.add('given');
+        td.textContent = given;
+      } else {
+        const inp = document.createElement('input');
+        inp.className = 'sd-inp';
+        inp.type = 'text';
+        inp.inputMode = 'none';       /* the num-pad is the keyboard on touch */
+        inp.readOnly = true;          /* stops mobile keyboards popping up   */
+        inp.dataset.r = r; inp.dataset.c = c;
+        inp.addEventListener('focus', () => selectCell(r, c));
+        inp.addEventListener('keydown', e => onKey(e, r, c, inp));
+        td.appendChild(inp);
+      }
+      tr.appendChild(td);
+    }
+    tbl.appendChild(tr);
+  }
+  focusFirstInput();
+}
+
+function getInp(r, c) { return document.querySelector(`.sd-inp[data-r="${r}"][data-c="${c}"]`); }
+
+function focusFirstInput() {
+  const first = document.querySelector('.sd-inp');
+  if (first) { first.focus(); }
+}
+
+function selectCell(r, c) {
+  sel = { r, c };
+  // soft-highlight the whole row + column, stronger ring on the cell itself
+  document.querySelectorAll('#sd-grid td').forEach(td => td.classList.remove('sel', 'lane'));
+  for (let i = 0; i < SIZE; i++) {
+    document.getElementById(`sd-td-${r}-${i}`)?.classList.add('lane');
+    document.getElementById(`sd-td-${i}-${c}`)?.classList.add('lane');
+  }
+  document.getElementById(`sd-td-${r}-${c}`)?.classList.add('sel');
+}
+
+function setCellValue(r, c, val) {
+  const inp = getInp(r, c);
+  if (!inp) return;
+  const td = document.getElementById(`sd-td-${r}-${c}`);
+  td.classList.remove('ok', 'err', 'hinted');
+  inp.value = val === 0 ? '' : String(val);
+  if (val !== 0) {
+    td.classList.remove('popped');
+    void td.offsetWidth;             /* restart the pop animation */
+    td.classList.add('popped');
+  }
+}
+
+function padPress(val) {
+  setCellValue(sel.r, sel.c, val);
+  getInp(sel.r, sel.c)?.focus();
+}
+
+function revealCell() {
+  if (!puzzle) return;
+  const inp = getInp(sel.r, sel.c);
+  if (!inp) {
+    showMsg('Tap an empty square first, then press Hint!', 'keep-going');
+    return;
+  }
+  const td = document.getElementById(`sd-td-${sel.r}-${sel.c}`);
+  setCellValue(sel.r, sel.c, puzzle.solution[sel.r][sel.c]);
+  td.classList.add('hinted');
+  inp.focus();
+}
+
+function moveFocus(r, c, dr, dc) {
+  let nr = r + dr, nc = c + dc;
+  while (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) {
+    const inp = getInp(nr, nc);
+    if (inp) { inp.focus(); return; }
+    nr += dr; nc += dc;
+  }
+}
+
+function onKey(e, r, c, inp) {
+  if (/^[1-4]$/.test(e.key)) {
+    setCellValue(r, c, +e.key);
+    e.preventDefault(); return;
+  }
+  if (['Backspace', 'Delete', 'e', 'd'].includes(e.key)) {
+    setCellValue(r, c, 0);
+    e.preventDefault(); return;
+  }
+  const moves = { ArrowRight: [0, 1], ArrowLeft: [0, -1], ArrowUp: [-1, 0], ArrowDown: [1, 0] };
+  if (moves[e.key]) {
+    const [dr, dc] = moves[e.key];
+    moveFocus(r, c, dr, dc);
+    e.preventDefault(); return;
+  }
+  if (e.key === 'Enter') { checkBoard(); e.preventDefault(); }
+}
+
+function showMsg(msg, type) {
+  const el = document.getElementById('sd-feedback');
+  el.textContent = msg;
+  el.className = 'feedback show ' + type;
+}
+
+function launchEmojis(emojis) {
+  for (let i = 0; i < 6; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'emoji-float';
+      el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      el.style.left = (20 + Math.random() * 60) + 'vw';
+      el.style.top = (30 + Math.random() * 40) + 'vh';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 1600);
+    }, i * 150);
+  }
+}
+
+function checkBoard() {
+  if (!puzzle) return;
+
+  let full = true;
+  document.querySelectorAll('.sd-inp').forEach(inp => { if (!inp.value) full = false; });
+  if (!full) {
+    showMsg('🟡 Fill all the squares first!', 'keep-going');
+    return;
+  }
+
+  checks++;
+  document.getElementById('sd-checks').textContent = checks;
+
+  let allRight = true;
+  document.querySelectorAll('.sd-inp').forEach(inp => {
+    const r = +inp.dataset.r, c = +inp.dataset.c;
+    const td = document.getElementById(`sd-td-${r}-${c}`);
+    const correct = +inp.value === puzzle.solution[r][c];
+    td.classList.remove('ok', 'err');
+    td.classList.add(correct ? 'ok' : 'err');
+    if (!correct) allRight = false;
+  });
+
+  if (allRight) {
+    solvedCount++;
+    document.getElementById('sd-solved').textContent = solvedCount;
+    document.getElementById('sd-feedback').className = 'feedback';
+    document.getElementById('win-banner').style.display = 'block';
+    launchEmojis(['🎉', '🌟', '🏆', '🎊', '💫']);
+  } else {
+    showMsg('Some numbers are wrong — the red ones need another look!', 'keep-going');
+  }
+}
+
+function restartGame() {
+  if (!puzzle) return;
+  document.querySelectorAll('.sd-inp').forEach(inp => {
+    inp.value = '';
+    const r = +inp.dataset.r, c = +inp.dataset.c;
+    document.getElementById(`sd-td-${r}-${c}`).classList.remove('ok', 'err', 'hinted');
+  });
+  document.getElementById('win-banner').style.display = 'none';
+  document.getElementById('sd-feedback').className = 'feedback';
+  focusFirstInput();
+}
+
+newGame();
+</script>
+{% endblock %}
