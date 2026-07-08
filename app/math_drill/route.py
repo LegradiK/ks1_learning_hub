@@ -38,6 +38,7 @@ def index():
     init_session()
     q = session["md_question"]
     calc_type = session["md_calc_type"]
+    feedback = session.pop("md_feedback", None)
     return render_template(
         "math_drill/game.html",
         num1=q["num1"], op=q["op"], num2=q["num2"],
@@ -49,7 +50,8 @@ def index():
         calc_type=calc_type,
         eq_style=session["md_eq_style"],
         calc_types=CALC_TYPES,
-        levels=levels_for(calc_type),   # picker hidden when only 1
+        levels=levels_for(calc_type),
+        feedback=feedback,
     )
 
 
@@ -64,15 +66,20 @@ def check_answer():
         return redirect(url_for("math_drill.index"))
 
     session["md_total"] += 1
-    if user_answer == q["answer"]:
+    is_correct = user_answer == q["answer"]
+    if is_correct:
         session["md_correct"] += 1
         session["md_streak"] += 1
-        flash(f"✓ Correct!  {q['num1']} {q['op']} {q['num2']} = {q['answer']}", "success")
     else:
         session["md_wrong"] += 1
         session["md_streak"] = 0
-        flash(f"✗ Not quite: {q['num1']} {q['op']} {q['num2']} = {q['answer']}, you answered {user_answer}.", "error")
 
+    session["md_feedback"] = {
+        "correct": is_correct,
+        "question": f"{q['num1']} {q['op']} {q['num2']}",
+        "answer": q["answer"],
+        "user_answer": user_answer,
+    }
     session["md_question"] = _fresh_question()
     session.modified = True
     return redirect(url_for("math_drill.index"))

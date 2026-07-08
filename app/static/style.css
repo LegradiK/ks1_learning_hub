@@ -377,6 +377,11 @@ h2 { font-size: clamp(1.3rem, 3vw, 1.7rem); }
   color: var(--ink-soft);
 }
 
+.sc-streak {
+  background: var(--accent-soft);
+  border: 3px solid var(--accent);
+}
+
 /* loading + win banner */
 #loading {
   font-family: var(--font-display);
@@ -642,7 +647,13 @@ table#cw td.err { border-color: var(--bad);    background: var(--bad-soft); }
   color: var(--ink-soft);
   font-size: 0.95rem;
   padding: 1rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.8rem 1.2rem;
+  background: var(--panel);
+  border-bottom: 3px solid var(--line);
 }
+
 
 /* ---------- flash messages ---------- */
 .flashes { margin-bottom: 1.2rem; }
@@ -1112,20 +1123,26 @@ table#cw td.err { border-color: var(--bad);    background: var(--bad-soft); }
   margin: 0.6rem 0;
 }
 
-.letter-tiles > * {
+.letter-tile {
   display: grid;
   place-items: center;
-  min-width: 52px;
+  min-width: 44px;
   height: 60px;
-  padding: 0 0.4rem;
+  padding: 0 0.3rem;
   font-family: var(--font-display);
-  font-size: 1.6rem;
+  font-size: 1.4rem;
   font-weight: 700;
   text-transform: uppercase;
   background: var(--accent-soft);
-  border-bottom: 5px solid var(--accent);
+  border: 3px solid var(--line);
+  border-bottom-width: 5px;
   border-radius: var(--radius-sm) var(--radius-sm) 6px 6px;
   animation: pop 0.25s ease;
+}
+
+@keyframes pop {
+  from { transform: scale(0.6); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
 }
 
 /* stage 4: sentence with a gap */
@@ -1144,23 +1161,34 @@ table#cw td.err { border-color: var(--bad);    background: var(--bad-soft); }
 .feedback {
   font-family: var(--font-display);
   font-size: 1.2rem;
-  min-height: 1.6em;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  margin: 0;
+  transition: max-height 0.25s ease, opacity 0.25s ease, margin 0.25s ease;
+}
+
+.feedback.show {
+  max-height: 3em;
+  opacity: 1;
   margin: 0.8rem 0;
 }
 
-.word-dots {
-  display: flex;
-  justify-content: center;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-  margin-top: 0.8rem;
+.feedback.great      { color: var(--good); }
+.feedback.keep-going { color: var(--bad); }
+
+/* celebration emojis (created by launchEmojis in the JS) */
+.emoji-float {
+  position: fixed;
+  font-size: 2.2rem;
+  pointer-events: none;
+  z-index: 200;
+  animation: emoji-float 1.6s ease-out forwards;
 }
 
-.word-dots > * {
-  width: 14px;
-  height: 14px;
-  border-radius: 999px;
-  background: var(--line);
+@keyframes emoji-float {
+  from { transform: translateY(0) scale(0.6);      opacity: 1; }
+  to   { transform: translateY(-120px) scale(1.3); opacity: 0; }
 }
 
 /* completion screen (JS shows it when the stage is finished) */

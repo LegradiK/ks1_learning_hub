@@ -10,6 +10,11 @@
     <h1>Letter Quest</h1>
     <p class="game-sub">Pick a topic, then solve the puzzle!</p>
   </div>
+  <div class="score-bar">
+    <div class="sc sc-streak"><div class="sc-val" id="sc-solved">0</div><div class="sc-lbl">⭐ solved</div></div>
+    <div class="sc"><div class="sc-val" id="sc-words">0</div><div class="sc-lbl">🔤 words</div></div>
+    <div class="sc"><div class="sc-val" id="sc-checks">0</div><div class="sc-lbl">🔍 checks</div></div>
+  </div>
 </header>
 
 
@@ -29,12 +34,6 @@
   <button class="btn btn-check"  onclick="checkAll()">✅ Check</button>
   <button class="btn btn-reveal" onclick="revealAll()">👁 Reveal</button>
   <button class="btn btn-clear"  onclick="clearAll()">🗑 Clear</button>
-</div>
-
-<div class="score-bar">
-  <div class="sc"><div class="sc-val" id="sc-solved">0</div><div class="sc-lbl">solved</div></div>
-  <div class="sc"><div class="sc-val" id="sc-words">0</div><div class="sc-lbl">words</div></div>
-  <div class="sc"><div class="sc-val" id="sc-checks">0</div><div class="sc-lbl">checks</div></div>
 </div>
 
 <div id="win-banner" class="win-banner">

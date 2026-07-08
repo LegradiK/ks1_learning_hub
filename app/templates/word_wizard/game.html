@@ -5,10 +5,16 @@
 
 {% block content %}
 <header class="game-header">
-  <img src="{{ url_for('static', filename='wizard.png') }}" style="width:3em;height:3em;vertical-align:middle;margin-left:1rem;">
+  <span class="subject-badge" aria-hidden="true">🪄</span>
   <div>
     <h1>Word Wizard</h1>
-    <p class="game-sub">Listen carefully, then spell what you hear!</p>
+    <p class="game-sub">Listen carefully, then spell the word!</p>
+  </div>
+  <div class="score-bar">
+    <div class="sc"><div class="sc-val" id="ww-right">0</div><div class="sc-lbl">😀 right</div></div>
+    <div class="sc"><div class="sc-val" id="ww-wrong">0</div><div class="sc-lbl">🙈 wrong</div></div>
+    <div class="sc"><div class="sc-val" id="ww-total">0</div><div class="sc-lbl">🧮 total</div></div>
+    <div class="sc sc-streak"><div class="sc-val" id="ww-streak">0</div><div class="sc-lbl">🔥 streak</div></div>
   </div>
 </header>
 
@@ -62,9 +68,7 @@
 
 {% block scripts %}
 <script>
-  // Full word banks for the client-side game.
-  // If your JS uses a different variable name, rename this to match.
-  const QUIZZES = {{ quizzes | tojson }};
+  const quizData = {{ quizzes | tojson }};
 </script>
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 {% endblock %}

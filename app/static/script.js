@@ -1,6 +1,18 @@
 // ==================== DATA (from Flask via Jinja2) ====================
 const usedWords = { stage1: {}, stage2: {}, stage3: {}, stage4: {} };
 
+// session-wide score, shown in the header (Math Drill style)
+const tally = { right: 0, wrong: 0, streak: 0 };
+
+function recordResult(correct) {
+    if (correct) { tally.right++; tally.streak++; }
+    else         { tally.wrong++; tally.streak = 0; }
+    document.getElementById('ww-right').textContent  = tally.right;
+    document.getElementById('ww-wrong').textContent  = tally.wrong;
+    document.getElementById('ww-total').textContent  = tally.right + tally.wrong;
+    document.getElementById('ww-streak').textContent = tally.streak;
+}
+
 const difficultyLabels = {
     default: { reception: 'Reception', year1: 'Year 1', year2: 'Year 2' },
     stage3:  { reception: 'Top 100',   year1: 'Top 200', year2: 'Top 300' }
@@ -52,25 +64,6 @@ function updateProgress(n, index, total) {
     document.getElementById(`s${n}-progress`).style.width = (index / total * 100) + '%';
 }
 
-function renderDots(id, total, current) {
-    const container = document.getElementById(id);
-    container.innerHTML = '';
-    for (let i = 0; i < total; i++) {
-        const d = document.createElement('div');
-        d.className = 'dot' + (i < current ? ' done' : i === current ? ' current' : '');
-        container.appendChild(d);
-    }
-}
-
-function markDot(id, index, total) {
-    renderDots(id, total, index);
-    const dots = document.querySelectorAll('#' + id + ' .dot');
-    if (dots[index]) {
-        dots[index].classList.remove('current');
-        dots[index].classList.add('done');
-    }
-}
-
 function launchEmojis(emojis) {
     for (let i = 0; i < 6; i++) {
         setTimeout(() => {
@@ -102,6 +95,7 @@ const state = {};
 
 // ==================== SPEECH ====================
 let activeVoice = 'Amy';
+let puterReady = false;   // becomes true after a successful (temp) sign-in
 
 function switchVoices(event, gender) {
     document.querySelectorAll('.speech-voice-btn').forEach(btn => btn.classList.remove('active'));
@@ -109,16 +103,35 @@ function switchVoices(event, gender) {
     activeVoice = gender === 'man' ? 'Brian' : 'Amy';
 }
 
-function speak(text, onEnd) {
-    if (window.puter) {
+async function initPuter() {
+    if (puterReady) return true;
+    if (!(window.puter && puter.ai && typeof puter.ai.txt2speech === 'function')) return false;
+    try {
+        if (!puter.auth.isSignedIn()) {
+            await Promise.race([
+                puter.auth.signIn({ attempt_temp_user_creation: true }),
+                new Promise((_, rej) => setTimeout(() => rej(new Error('sign-in timeout')), 5000))
+            ]);
+        }
+        puterReady = true;
+    } catch (err) {
+        console.warn('Puter sign-in failed, using browser voice:', err);
+    }
+    return puterReady;
+}
+
+async function speak(text, onEnd) {
+    const usePuter = await initPuter();   // one-time on first click, instant afterwards
+
+    if (usePuter) {
         puter.ai.txt2speech(text, { voice: activeVoice, engine: 'neural', language: 'en-GB' })
             .then((audio) => {
                 if (onEnd) audio.onended = onEnd;
-                audio.play();
-                console.log("Voice: Puter");
+                console.log("Voice: Puter (" + activeVoice + ")");
+                return audio.play();
             })
-            .catch(() => {
-                console.log("Puter failed, falling back to browser voice");
+            .catch((err) => {
+                console.error("Puter TTS failed, falling back to browser voice:", err);
                 browserSpeak(text, onEnd);
             });
     } else {
@@ -134,9 +147,38 @@ function browserSpeak(text, onEnd) {
     u.rate = 0.85;
     u.pitch = 1.1;
     u.lang = 'en-GB';
-    if (onEnd) u.onend = onEnd;
+
+    // Best-effort match to the chosen gender in the fallback voice too
+    const voices = window.speechSynthesis.getVoices();
+    const wantMale = activeVoice === 'Brian';
+    const match =
+        voices.find(v => v.lang === 'en-GB' && (wantMale ? /male|daniel|george|ryan/i : /female|hazel|libby|sonia|susan/i).test(v.name)) ||
+        voices.find(v => v.lang === 'en-GB');
+    if (match) u.voice = match;
+
+    if (onEnd) {
+        u.onend = onEnd;
+        u.onerror = onEnd;   // don't leave the game stuck if speech errors
+    }
     window.speechSynthesis.speak(u);
 }
+
+// ==================== KEYBOARD ====================
+// Enter in a spelling input = press Reveal (or Next, once revealed)
+[1, 2, 3, 4].forEach(n => {
+    const input = document.getElementById(`s${n}-input`);
+    if (!input) return;
+    input.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+
+        const revealBtn = document.getElementById(`s${n}-reveal-btn`);
+        const nextBtn   = document.getElementById(`s${n}-next-btn`);
+
+        if (!revealBtn.disabled)     revealBtn.click();
+        else if (!nextBtn.disabled)  nextBtn.click();
+    });
+});
 
 // ==================== INIT ====================
 function stageInit(n) {
@@ -156,7 +198,6 @@ function stageInit(n) {
         current: { word, full, answer, blanks: [], emoji: "", index: 0, total: all.length }
     };
 
-    renderDots(`s${n}-dots`, all.length, 0);
     updateProgress(n, 0, all.length);
 
     if (n === 4) sentenceResetUI(n);
@@ -177,7 +218,7 @@ function spellingResetUI(n) {
     setBtn(`s${n}-reveal-btn`, false);
     setBtn(`s${n}-next-btn`, false);
     document.getElementById(`s${n}-instruction`).textContent = 'Press the button to hear a word!';
-    document.getElementById(`s${n}-feedback`).classList.remove('show');
+    document.getElementById(`s${n}-feedback`).className = 'feedback';
     state[n].listened = false;
     state[n].revealed = false;
 }
@@ -269,18 +310,22 @@ function spellingReveal(n) {
     const msgs = correct
         ? ['Perfect spelling!', 'Nailed it!', 'Spot on!', 'Brilliant!', 'You got it!']
         : ['Good try!', 'Nearly there!', 'Keep practising!', 'Almost!'];
-    showFeedback(`s${n}-feedback`, msgs[Math.floor(Math.random() * msgs.length)], correct ? 'great' : 'keep-going');
+    const winEmojis = ['🎉', '⭐', '🌟', '🏆', '✨'];
+    let msg = msgs[Math.floor(Math.random() * msgs.length)];
+    if (correct) {
+        msg = winEmojis[Math.floor(Math.random() * winEmojis.length)] + ' ' + msg;
+    }
+    showFeedback(`s${n}-feedback`, msg, correct ? 'great' : 'keep-going');
     launchEmojis(correct ? ['⭐', '🎊', '✨', '💫'] : ['💪', '📝', '🌟']);
 
     setBtn(`s${n}-reveal-btn`, false);
     setBtn(`s${n}-next-btn`, true);
 
+    recordResult(correct);
+
     const difficulty = getActiveDifficulty(n);
     const index = usedWords[`stage${n}`][difficulty]?.length ?? 0;
-
-    const total = state[n].current.total;
-    markDot(`s${n}-dots`, index - 1, total);
-    updateProgress(n, index, total);
+    updateProgress(n, index, state[n].current.total);
 }
 
 function spellingNext(n) {
@@ -297,7 +342,6 @@ function spellingNext(n) {
     const word = pickWord(stageId, difficulty);
     state[n].current = { word, full: word, answer: word, blanks: [], emoji: "", index, total };
     spellingResetUI(n);
-    renderDots(`s${n}-dots`, total, index);
 }
 
 // ==================== SENTENCE STAGE (4) ====================
@@ -310,7 +354,7 @@ function sentenceResetUI(n) {
     setBtn(`s${n}-reveal-btn`, false);
     setBtn(`s${n}-next-btn`, false);
     document.getElementById(`s${n}-instruction`).textContent = 'Press the button to hear a sentence!';
-    document.getElementById(`s${n}-feedback`).classList.remove('show');
+    document.getElementById(`s${n}-feedback`).className = 'feedback';
     state[n].listened = false;
     state[n].revealed = false;
 }
@@ -361,18 +405,22 @@ function sentenceReveal(n) {
     const msgs = correct
         ? ['Perfect spelling!', 'Nailed it!', 'Spot on!', 'Brilliant!', 'You got it!']
         : ['Good try!', 'Nearly there!', 'Keep practising!', 'Almost!'];
-    showFeedback(`s${n}-feedback`, msgs[Math.floor(Math.random() * msgs.length)], correct ? 'great' : 'keep-going');
+    const winEmojis = ['🎉', '⭐', '🌟', '🏆', '✨'];
+    let msg = msgs[Math.floor(Math.random() * msgs.length)];
+    if (correct) {
+        msg = winEmojis[Math.floor(Math.random() * winEmojis.length)] + ' ' + msg;
+    }
+    showFeedback(`s${n}-feedback`, msg, correct ? 'great' : 'keep-going');
     launchEmojis(correct ? ['⭐', '🎊', '✨', '💫'] : ['💪', '📝', '🌟']);
 
     setBtn(`s${n}-reveal-btn`, false);
     setBtn(`s${n}-next-btn`, true);
 
+    recordResult(correct);
+
     const difficulty = getActiveDifficulty(n);
     const index = usedWords[`stage${n}`][difficulty]?.length ?? 0;
-
-    const total = state[n].current.total;
-    markDot(`s${n}-dots`, index - 1, total);
-    updateProgress(n, index, total);
+    updateProgress(n, index, state[n].current.total);
 }
 
 function sentenceNext(n) {
@@ -394,7 +442,6 @@ function sentenceNext(n) {
         blanks: [], emoji: "", index, total
     };
     sentenceResetUI(n);
-    renderDots(`s${n}-dots`, total, index);
 }
 
 // ==================== STAGE TABS ====================

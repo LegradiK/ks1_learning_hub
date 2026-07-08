@@ -78,6 +78,14 @@
     <button type="submit" class="jelly-btn btn-big">✅ Check</button>
   </form>
 
+  {% if feedback %}
+    {% if feedback.correct %}
+    <p class="feedback show great">🎉 Correct! {{ feedback.question }} = {{ feedback.answer }}</p>
+    {% else %}
+    <p class="feedback show keep-going">Good try! {{ feedback.question }} = <strong>{{ feedback.answer }}</strong></p>
+    {% endif %}
+  {% endif %}
+
   <div class="game-actions" style="justify-content: center;">
     <a class="jelly-btn btn-quiet" href="{{ url_for('math_drill.new_question_route') }}">🔁 Skip this one</a>
     <a class="jelly-btn btn-quiet" href="{{ url_for('math_drill.reset') }}">🧹 Start again</a>

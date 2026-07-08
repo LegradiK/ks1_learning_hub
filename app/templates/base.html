@@ -22,18 +22,18 @@
       <details class="nav-dropdown">
         <summary class="nav-btn">🎮 Games</summary>
         <div class="dropdown-menu">
-          <a class="dropdown-item" href="{{ url_for('letter_quest.game') }}">🔤 Letter Quest</a>
-          <a class="dropdown-item" href="{{ url_for('math_drill.index') }}">🔢 Math Drill</a>
           <a class="dropdown-item" href="{{ url_for('word_wizard.game') }}"><img src="{{ url_for('static', filename='wizard.png') }}" style="width:1em;height:1em;vertical-align:middle;"> Word Wizard</a>
+          <a class="dropdown-item" href="{{ url_for('math_drill.index') }}">🔢 Math Drill</a>
+          <a class="dropdown-item" href="{{ url_for('letter_quest.game') }}">🔤 Letter Quest</a> 
         </div>
       </details>
 
       <details class="nav-dropdown">
         <summary class="nav-btn">❓ How to play</summary>
         <div class="dropdown-menu">
-          <button class="dropdown-item" onclick="openHowto('letter-quest')">🔤 Letter Quest</button>
-          <button class="dropdown-item" onclick="openHowto('math-drill')">🔢 Math Drill</button>
           <button class="dropdown-item" onclick="openHowto('word-wizard')"><img src="{{ url_for('static', filename='wizard.png') }}" style="width:1em;height:1em;vertical-align:middle;"> Word Wizard</button>
+          <button class="dropdown-item" onclick="openHowto('math-drill')">🔢 Math Drill</button>
+          <button class="dropdown-item" onclick="openHowto('letter-quest')">🔤 Letter Quest</button>
         </div>
       </details>
     </div>
@@ -61,53 +61,58 @@
 
       <div class="howto-page" id="howto-letter-quest" style="display:none">
         <h2>🔤 Letter Quest</h2>
+        <p>A crossword made just for you! Solve the clues and fill the grid with words.</p>
 
         <h3>🖼 Beginner Mode</h3>
-        <p>Look at the picture clues on the side. Each picture is a word — can you spell it?</p>
+        <p>Every clue is a picture. Say what you see, then spell it!</p>
         <ul>
-          <li>Find the number on the grid that matches the picture</li>
-          <li>Click that square and type the letters to spell the word</li>
-          <li>Words go <strong>Across →</strong> or <strong>Down ↓</strong></li>
-          <li>Press <strong>✅ Check</strong> to see if you got it right</li>
+          <li>Look at a picture and find its number on the grid</li>
+          <li>Tap that square and type the word, one letter in each box</li>
+          <li>Words go <strong>Across →</strong> or <strong>Down ↓</strong> — follow the boxes!</li>
         </ul>
 
         <hr class="modal-divider">
 
         <h3>📚 Advanced Mode</h3>
-        <p>Read the clues on the side and work out the answer.</p>
+        <p>Ready for a challenge? Now the clues are riddles to read.</p>
         <ul>
-          <li>Find the matching number on the grid</li>
-          <li>Click and type your answer letter by letter</li>
-          <li>The number of letters is shown under each clue</li>
+          <li>Read a clue and work out the mystery word</li>
+          <li>The little number under each clue tells you how many letters it has</li>
+          <li>Stuck on one? Skip it — crossing words will give you free letters!</li>
         </ul>
 
         <hr class="modal-divider">
 
         <h3>🎮 Buttons</h3>
         <ul>
-          <li><strong>🎲 New puzzle</strong> — load a fresh puzzle</li>
-          <li><strong>✅ Check</strong> — mark right and wrong letters</li>
-          <li><strong>👁 Reveal</strong> — show all the answers</li>
-          <li><strong>🗑 Clear</strong> — wipe the grid and start again</li>
+          <li><strong>🎲 New puzzle</strong> — shuffle up a brand new grid</li>
+          <li><strong>✅ Check</strong> — green means right, red means try again</li>
+          <li><strong>👁 Reveal</strong> — peek at all the answers</li>
+          <li><strong>🗑 Clear</strong> — wipe everything and have another go</li>
         </ul>
       </div>
 
       <div class="howto-page" id="howto-math-drill" style="display:none">
         <h2>🔢 Math Drill</h2>
+        <p>One sum at a time — how many can you get right in a row?</p>
         <ul>
-          <li>Pick a <strong>sum type</strong> first — some types then offer difficulty levels</li>
-          <li>Type your answer and press <strong>✅ Check</strong></li>
-          <li>Get sums right in a row to build your 🔥 <strong>streak</strong></li>
-          <li><strong>🔁 Skip</strong> swaps the sum; <strong>🧹 Start again</strong> resets your score</li>
+          <li>Pick a <strong>sum type</strong>: ➕ ➖ ✖️ or ➗</li>
+          <li>Some types let you choose how tricky the sums are — start easy and level up!</li>
+          <li>Type your answer and press <strong>✅ Check</strong> (or hit Enter)</li>
+          <li>Every right answer grows your 🔥 <strong>streak</strong> — one wrong answer and it's back to zero!</li>
+          <li>Sum too tough? <strong>🔁 Skip</strong> swaps it. <strong>🧹 Start again</strong> wipes your score for a fresh run</li>
         </ul>
       </div>
 
       <div class="howto-page" id="howto-word-wizard" style="display:none">
         <h2><img src="{{ url_for('static', filename='wizard.png') }}" style="width:1em;height:1em;vertical-align:middle;"> Word Wizard</h2>
+        <p>Listen like a wizard, spell like a champion!</p>
         <ul>
-          <li>Pick a <strong>stage</strong> and a difficulty</li>
-          <li>Listen to the word, then spell it out</li>
-          <li>You won't see the same word twice until you've done them all</li>
+          <li>Pick a <strong>stage</strong>: tricky words, vocabulary, top words — or fill in the missing word in a sentence</li>
+          <li>Choose your level: 🌱 Reception, 📗 Year 1, 📘 Year 2 — or <strong>All</strong>, which mixes every word from Reception to Year 2</li>
+          <li>Press <strong>🔊 Listen</strong> to hear your word — you can listen as many times as you like</li>
+          <li>Type your spelling, then click <strong>👀 Reveal</strong> or press <strong>Enter</strong> to see how you did, letter by letter</li>
+          <li>Right answers build your 🔥 streak — and no word repeats until you've beaten them all!</li>
         </ul>
       </div>
 
@@ -141,6 +146,8 @@
     });
   </script>
 
+  <script src="https://js.puter.com/v2/"></script>
   {% block scripts %}{% endblock %}
+
 </body>
 </html>
