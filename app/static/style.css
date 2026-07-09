@@ -35,12 +35,20 @@
   --radius: 22px;
   --radius-sm: 14px;
   --shadow: 0 4px 0 rgba(58, 46, 79, 0.12);
+
+  --sudoku: #2FB78C;        /* fresh green      */
+  --sudoku-soft: #E1F7EF;
+
+  --coins: #F2B705;         /* pound gold       */
+  --coins-soft: #FDF3D3;
 }
 
 .theme-letters { --accent: var(--letters); --accent-soft: var(--letters-soft); }
 .theme-maths   { --accent: var(--maths);   --accent-soft: var(--maths-soft); }
 .theme-words   { --accent: var(--words);   --accent-soft: var(--words-soft); }
 .theme-hub     { --accent: var(--hub);     --accent-soft: var(--hub-soft); }
+.theme-sudoku  { --accent: var(--sudoku);  --accent-soft: var(--sudoku-soft); }
+.theme-coins { --accent: var(--coins); --accent-soft: var(--coins-soft); }
 
 /* ---------- base ---------- */
 * { box-sizing: border-box; }
@@ -265,17 +273,18 @@ h2 { font-size: clamp(1.3rem, 3vw, 1.7rem); }
 }
 
 .mode-btn {
+  font-size: 0.95rem;
+  min-height: 46px;
+  padding: 0.4rem 0.9rem;
+  background: var(--panel);
+  box-shadow: 0 4px 0 var(--line);
   font-family: var(--font-display);
-  font-size: 1.05rem;
   font-weight: 600;
   color: var(--ink-soft);
-  background: var(--panel);
   border: none;
   border-radius: var(--radius-sm);
   padding: 0.6rem 1.2rem;
-  min-height: 52px;
   cursor: pointer;
-  box-shadow: 0 4px 0 var(--line);
   transition: transform 0.08s ease;
 }
 
@@ -704,6 +713,13 @@ table#sd-grid td.popped .sd-inp { animation: pop 0.25s ease; }
 }
 .sd-inp:focus { outline: none; }   /* the .sel ring is the focus indicator */
 
+.mode-and-num-pad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;  
+  gap: 1rem;
+}
+
 /* number pad — chunky jelly keys for tablet fingers */
 .num-pad {
   display: grid;
@@ -732,7 +748,12 @@ table#sd-grid td.popped .sd-inp { animation: pop 0.25s ease; }
 
 .num-btn:hover { border-color: var(--accent); }
 
-.num-erase { grid-column: 1 / -1; background: var(--bad-soft); border-color: var(--bad); }
+.num-erase { 
+  grid-column: 1 / -1; 
+  background: var(--bad-soft); 
+  border-color: var(--bad); 
+  margin-top: 3rem;
+}
 
 @media (max-width: 640px) {
   .num-pad { grid-template-columns: repeat(5, 1fr); width: 100%; }
@@ -743,6 +764,23 @@ table#sd-grid td.popped .sd-inp { animation: pop 0.25s ease; }
 table#sd-grid td.hinted .sd-inp { color: var(--words); }
 table#sd-grid td.hinted.ok .sd-inp,
 table#sd-grid td.hinted.err .sd-inp { color: inherit; } /* check verdict wins */
+table#sd-grid td.given, .sd-inp { font-variant-emoji: emoji; }
+table#sd-grid td {
+  width: var(--cell, clamp(64px, 12vw, 92px));
+  height: var(--cell, clamp(64px, 12vw, 92px));
+  font-size: calc(var(--cell, 80px) * 0.5);
+  /* ...rest unchanged... */
+}
+.sd-inp { font-size: calc(var(--cell, 80px) * 0.5); }
+
+/* sudoku gets elbow room, same trick as letter quest */
+.theme-sudoku .page { width: min(1200px, 100% - 2rem); }
+
+/* keep grid + pad side by side; pad wraps below only on small screens */
+.sudoku-layout { flex-wrap: nowrap; }
+@media (max-width: 860px) {
+  .sudoku-layout { flex-wrap: wrap; }
+}
 
 /* ---------- footer ---------- */
 .footer {
@@ -847,6 +885,7 @@ table#sd-grid td.hinted.err .sd-inp { color: inherit; } /* check verdict wins */
 .option-btn {
   font-size: 0.95rem;
   min-height: 46px;
+  min-width: 72px;
   padding: 0.4rem 0.9rem;
   background: var(--panel);
   color: var(--ink);

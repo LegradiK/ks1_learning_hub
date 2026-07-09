@@ -33,11 +33,18 @@
     <span class="jelly-btn card-cta">Play</span>
   </a>
 
-  <a class="subject-card" href="{{ url_for('sudoku.game') }}">
+  <a class="subject-card theme-sudoku" href="{{ url_for('sudoku.game') }}">
     <span class="subject-badge" aria-hidden="true">🧩</span>
     <h2>Sudoku</h2>
-    <p>Fill every row, column and box with 1 to 4 — no repeats!</p>
-    <span class="jelly-btn card-cta">Play!</span>
+    <p>Fill every row, column and box — with numbers or animals!</p>
+    <span class="jelly-btn card-cta">Play</span>
+  </a>
+
+  <a class="subject-card theme-coins" href="{{ url_for('coin_counter.game') }}">
+    <span class="subject-badge" aria-hidden="true">💰</span>
+    <h2>Coin Counter</h2>
+    <p>Count coins and notes, get expert on money counting!</p>
+    <span class="jelly-btn card-cta">Play</span>
   </a>
 
 

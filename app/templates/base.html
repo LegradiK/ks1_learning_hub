@@ -26,6 +26,7 @@
           <a class="dropdown-item" href="{{ url_for('math_drill.index') }}">🔢 Math Drill</a>
           <a class="dropdown-item" href="{{ url_for('letter_quest.game') }}">🔤 Letter Quest</a> 
           <a class="dropdown-item" href="{{ url_for('sudoku.game') }}">🧩 Sudoku</a>
+          <a class="dropdown-item" href="{{ url_for('coin_counter.game') }}">💰 Coin Counter</a>
         </div>
       </details>
 
@@ -36,6 +37,7 @@
           <button class="dropdown-item" onclick="openHowto('math-drill')">🔢 Math Drill</button>
           <button class="dropdown-item" onclick="openHowto('letter-quest')">🔤 Letter Quest</button>
           <button class="dropdown-item" onclick="openHowto('sudoku')">🧩 Sudoku</button>
+          <button class="dropdown-item" onclick="openHowto('coin-counter')">💰 Coin Counter</button>
         </div>
       </details>
     </div>
@@ -120,7 +122,7 @@
 
       <div class="howto-page" id="howto-sudoku" style="display:none">
         <h2>🧩 Sudoku</h2>
-        <p>A number puzzle — every row, column and box needs 1, 2, 3 and 4, with no repeats!</p>
+        <p>Fill every row, column and box — with numbers or animals!</p>
         <ul>
           <li>The shaded numbers are clues — they can't be changed</li>
           <li>Tap an empty square and type a number from <strong>1 to 4</strong></li>
@@ -128,6 +130,11 @@
           <li>Filled every square? Press <strong>✅ Check</strong> or hit <strong>Enter</strong> — red squares need another look!</li>
           <li><strong>🎲 New game</strong> deals a fresh puzzle; <strong>🔄 Restart</strong> clears your answers but keeps the clues</li>
         </ul>
+      </div>
+
+        <div class="howto-page" id="howto-coin-counter" style="display:none">
+        <h2>💰 Coin Counter</h2>
+        <p>Count coins and notes, get expert on money counting!</p>
       </div>
 
     </div>

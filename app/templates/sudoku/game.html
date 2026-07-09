@@ -8,7 +8,7 @@
   <span class="subject-badge" aria-hidden="true">🧩</span>
   <div>
     <h1>Sudoku</h1>
-    <p class="game-sub">Fill every row, column and box with 1 to 4!</p>
+    <p class="game-sub">Fill every row, column and box — with numbers or animals!</p>
   </div>
   <div class="score-bar">
     <div class="sc sc-streak"><div class="sc-val" id="sd-solved">0</div><div class="sc-lbl">🏆 solved</div></div>
@@ -16,12 +16,35 @@
   </div>
 </header>
 
-<div class="controls">
-  <button class="btn btn-new"    onclick="newGame()">🎲 New game</button>
-  <button class="btn btn-check"  onclick="checkBoard()">✅ Check</button>
-  <button class="btn btn-hint"   onclick="revealCell()">💡 Reveal</button>
-  <button class="btn btn-clear"  onclick="restartGame()">🔄 Restart</button>
+<div class="md-controls">
+  <div class="control-group">
+    <span class="control-label" style="min-width:auto; margin-left:0.8rem;">Grid</span>
+    <div class="option-row">
+      <button class="jelly-btn option-btn is-active" id="size-4" onclick="setSize(4)">4×4</button>
+      <button class="jelly-btn option-btn" id="size-6" onclick="setSize(6)">6×6</button>
+      <button class="jelly-btn option-btn" id="size-9" onclick="setSize(9)">9×9</button>
+    </div>
+    <span class="control-label" style="min-width:auto; margin-left:0.8rem;">Level</span>
+    <div class="option-row">
+      <button class="jelly-btn option-btn is-active" id="diff-easy"   onclick="setDifficulty('easy')">🌱 Easy</button>
+      <button class="jelly-btn option-btn" id="diff-medium" onclick="setDifficulty('medium')">🌿 Medium</button>
+      <button class="jelly-btn option-btn" id="diff-hard"   onclick="setDifficulty('hard')">🌳 Hard</button>
+    </div>
+    <span class="control-label" style="min-width:auto; margin-left:0.8rem;">Mode</span>
+    <div class="option-row mode-toggle">
+      <button class="mode-btn active" id="mode-numbers" onclick="setSymbolMode('numbers')">🔢 Numbers</button>
+      <button class="mode-btn" id="mode-animals" onclick="setSymbolMode('animals')">🐾 Animals</button>
+    </div>
+  </div>
+  <div class="controls">
+    <button class="btn btn-new"   onclick="newGame()">🎲 New game</button>
+    <button class="btn btn-check" onclick="checkBoard()">✅ Check</button>
+    <button class="btn btn-hint"  onclick="revealCell()">💡 Reveal</button>
+    <button class="btn btn-clear" onclick="restartGame()">🔄 Restart</button>
+  </div>
 </div>
+
+
 
 <div id="win-banner" class="win-banner">
   <h2>⭐ Puzzle solved! ⭐</h2>
@@ -37,13 +60,9 @@
     <table id="sd-grid"></table>
   </div>
 
-  <!-- tap-friendly number pad: perfect for tablets, optional for keyboards -->
-  <div class="num-pad" aria-label="Number pad">
-    <button class="num-btn" onclick="padPress(1)">1</button>
-    <button class="num-btn" onclick="padPress(2)">2</button>
-    <button class="num-btn" onclick="padPress(3)">3</button>
-    <button class="num-btn" onclick="padPress(4)">4</button>
-    <button class="num-btn num-erase" onclick="padPress(0)">⌫</button>
+  <div class="mode-and-num-pad">
+    <!-- tap-friendly pad: rebuilt by JS to match the grid size -->
+    <div class="num-pad" id="num-pad" aria-label="Number pad"></div>
   </div>
 </div>
 {% endblock %}
@@ -51,12 +70,54 @@
 {% block scripts %}
 <script>
 const PUZZLE_URL = "{{ url_for('sudoku.api_puzzle') }}";
-const SIZE = 4;
+
+const ANIMALS = ['🐱', '🐶', '🐑', '🐮', '🐔', '🐷', '🐴', '🐸', '🦆'];
+const CELL_SIZES = {
+  4: 'clamp(64px, 12vw, 92px)',
+  6: 'clamp(48px, 9vw, 72px)',
+  9: 'clamp(34px, 7vw, 54px)'
+};
 
 let puzzle = null;
+let boardSize = 4;
+let difficulty = 'easy';
+let SIZE = 4;       // the picker choice (survives New game)
+let symbolMode = 'numbers';
 let solvedCount = 0;
 let checks = 0;
-let sel = { r: 0, c: 0 };   // currently selected cell (input cells only)
+let sel = { r: 0, c: 0 };
+
+function sym(val) {
+  if (!val) return '';
+  return symbolMode === 'animals' ? ANIMALS[val - 1] : String(val);
+}
+
+function setSize(n) {
+  boardSize = n;
+  [4, 6, 9].forEach(s =>
+    document.getElementById(`size-${s}`).classList.toggle('is-active', s === n));
+  newGame();
+}
+
+function setDifficulty(d) {
+  difficulty = d;
+  ['easy', 'medium', 'hard'].forEach(k =>
+    document.getElementById(`diff-${k}`).classList.toggle('is-active', k === d));
+  newGame();
+}
+
+function setSymbolMode(mode) {
+  symbolMode = mode;
+  document.getElementById('mode-numbers').classList.toggle('active', mode === 'numbers');
+  document.getElementById('mode-animals').classList.toggle('active', mode === 'animals');
+  buildPad();
+  document.querySelectorAll('#sd-grid td.given').forEach(td => {
+    td.textContent = sym(+td.dataset.val);
+  });
+  document.querySelectorAll('.sd-inp').forEach(inp => {
+    inp.value = inp.dataset.val ? sym(+inp.dataset.val) : '';
+  });
+}
 
 async function newGame() {
   document.getElementById('loading').style.display = 'block';
@@ -64,36 +125,61 @@ async function newGame() {
   document.getElementById('win-banner').style.display = 'none';
   document.getElementById('sd-feedback').className = 'feedback';
 
-  const res = await fetch(PUZZLE_URL);
+  const res = await fetch(`${PUZZLE_URL}?size=${boardSize}&difficulty=${difficulty}`);
   puzzle = await res.json();
+  SIZE = puzzle.size;
+  sel = { r: 0, c: 0 };
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('sudoku-main').style.display = 'flex';
+  buildPad();
   renderGrid();
+}
+
+function buildPad() {
+  const pad = document.getElementById('num-pad');
+  pad.innerHTML = '';
+  pad.style.gridTemplateColumns = `repeat(${SIZE === 4 ? 2 : 3}, 76px)`;
+  for (let v = 1; v <= SIZE; v++) {
+    const b = document.createElement('button');
+    b.className = 'num-btn';
+    b.textContent = sym(v);
+    b.onclick = () => padPress(v);
+    pad.appendChild(b);
+  }
+  const erase = document.createElement('button');
+  erase.className = 'num-btn num-erase';
+  erase.textContent = 'Delete';
+  erase.onclick = () => padPress(0);
+  pad.appendChild(erase);
 }
 
 function renderGrid() {
   const tbl = document.getElementById('sd-grid');
   tbl.innerHTML = '';
+  tbl.style.setProperty('--cell', CELL_SIZES[SIZE]);
+
+  const { boxRows, boxCols } = puzzle;
 
   for (let r = 0; r < SIZE; r++) {
     const tr = document.createElement('tr');
     for (let c = 0; c < SIZE; c++) {
       const td = document.createElement('td');
       td.id = `sd-td-${r}-${c}`;
-      if (r === 1) td.classList.add('box-bottom');
-      if (c === 1) td.classList.add('box-right');
+      if ((r + 1) % boxRows === 0 && r < SIZE - 1) td.classList.add('box-bottom');
+      if ((c + 1) % boxCols === 0 && c < SIZE - 1) td.classList.add('box-right');
 
       const given = puzzle.grid[r][c];
       if (given !== 0) {
         td.classList.add('given');
-        td.textContent = given;
+        td.dataset.val = given;
+        td.textContent = sym(given);
       } else {
         const inp = document.createElement('input');
         inp.className = 'sd-inp';
         inp.type = 'text';
-        inp.inputMode = 'none';       /* the num-pad is the keyboard on touch */
-        inp.readOnly = true;          /* stops mobile keyboards popping up   */
+        inp.inputMode = 'none';       /* the pad is the keyboard on touch */
+        inp.readOnly = true;          /* stops mobile keyboards popping up */
         inp.dataset.r = r; inp.dataset.c = c;
         inp.addEventListener('focus', () => selectCell(r, c));
         inp.addEventListener('keydown', e => onKey(e, r, c, inp));
@@ -110,12 +196,11 @@ function getInp(r, c) { return document.querySelector(`.sd-inp[data-r="${r}"][da
 
 function focusFirstInput() {
   const first = document.querySelector('.sd-inp');
-  if (first) { first.focus(); }
+  if (first) first.focus();
 }
 
 function selectCell(r, c) {
   sel = { r, c };
-  // soft-highlight the whole row + column, stronger ring on the cell itself
   document.querySelectorAll('#sd-grid td').forEach(td => td.classList.remove('sel', 'lane'));
   for (let i = 0; i < SIZE; i++) {
     document.getElementById(`sd-td-${r}-${i}`)?.classList.add('lane');
@@ -129,10 +214,14 @@ function setCellValue(r, c, val) {
   if (!inp) return;
   const td = document.getElementById(`sd-td-${r}-${c}`);
   td.classList.remove('ok', 'err', 'hinted');
-  inp.value = val === 0 ? '' : String(val);
-  if (val !== 0) {
+  if (val === 0) {
+    delete inp.dataset.val;
+    inp.value = '';
+  } else {
+    inp.dataset.val = val;
+    inp.value = sym(val);
     td.classList.remove('popped');
-    void td.offsetWidth;             /* restart the pop animation */
+    void td.offsetWidth;              /* restart the pop animation */
     td.classList.add('popped');
   }
 }
@@ -165,7 +254,7 @@ function moveFocus(r, c, dr, dc) {
 }
 
 function onKey(e, r, c, inp) {
-  if (/^[1-4]$/.test(e.key)) {
+  if (/^[1-9]$/.test(e.key) && +e.key <= SIZE) {
     setCellValue(r, c, +e.key);
     e.preventDefault(); return;
   }
@@ -206,7 +295,7 @@ function checkBoard() {
   if (!puzzle) return;
 
   let full = true;
-  document.querySelectorAll('.sd-inp').forEach(inp => { if (!inp.value) full = false; });
+  document.querySelectorAll('.sd-inp').forEach(inp => { if (!inp.dataset.val) full = false; });
   if (!full) {
     showMsg('🟡 Fill all the squares first!', 'keep-going');
     return;
@@ -219,7 +308,7 @@ function checkBoard() {
   document.querySelectorAll('.sd-inp').forEach(inp => {
     const r = +inp.dataset.r, c = +inp.dataset.c;
     const td = document.getElementById(`sd-td-${r}-${c}`);
-    const correct = +inp.value === puzzle.solution[r][c];
+    const correct = +inp.dataset.val === puzzle.solution[r][c];
     td.classList.remove('ok', 'err');
     td.classList.add(correct ? 'ok' : 'err');
     if (!correct) allRight = false;
@@ -232,7 +321,7 @@ function checkBoard() {
     document.getElementById('win-banner').style.display = 'block';
     launchEmojis(['🎉', '🌟', '🏆', '🎊', '💫']);
   } else {
-    showMsg('Some numbers are wrong — the red ones need another look!', 'keep-going');
+    showMsg('Some are wrong — the red squares need another look!', 'keep-going');
   }
 }
 
@@ -240,6 +329,7 @@ function restartGame() {
   if (!puzzle) return;
   document.querySelectorAll('.sd-inp').forEach(inp => {
     inp.value = '';
+    delete inp.dataset.val;
     const r = +inp.dataset.r, c = +inp.dataset.c;
     document.getElementById(`sd-td-${r}-${c}`).classList.remove('ok', 'err', 'hinted');
   });
