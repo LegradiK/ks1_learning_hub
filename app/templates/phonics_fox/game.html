@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block title %}Phonics Fox{% endblock %}
+{% block theme %}theme-sound{% endblock %}
+
+{% block content %}
+<header class="game-header">
+  <span class="subject-badge" aria-hidden="true">🦊</span>
+  <div>
+    <h1>Phonics Fox</h1>
+    <p class="game-sub">Hear the word, spot the sound, spell it right!</p>
+  </div>
+  <div class="score-bar">
+    <div class="sc"><div class="sc-val" id="ss-right">0</div><div class="sc-lbl">😀 right</div></div>
+    <div class="sc"><div class="sc-val" id="ss-wrong">0</div><div class="sc-lbl">🙈 wrong</div></div>
+    <div class="sc"><div class="sc-val" id="ss-total">0</div><div class="sc-lbl">🧮 total</div></div>
+    <div class="sc sc-streak"><div class="sc-val" id="ss-streak">0</div><div class="sc-lbl">🔥 streak</div></div>
+  </div>
+</header>
+
+<div class="md-controls">
+  <div class="control-group">
+    <span class="control-label" style="min-width:auto;">Year</span>
+    <div class="option-row">
+      <button class="jelly-btn option-btn is-active" id="year-reception" onclick="setYear('reception')">🌱 Reception</button>
+      <button class="jelly-btn option-btn" id="year-year1" onclick="setYear('year1')">📗 Year 1</button>
+      <button class="jelly-btn option-btn" id="year-year2" onclick="setYear('year2')">📘 Year 2</button>
+    </div>
+    <span class="control-label" style="min-width:auto; margin-left:0.8rem;">Game</span>
+    <div class="option-row">
+      <button class="jelly-btn option-btn is-active" id="mode-insert" onclick="setMode('insert')">🧩 Missing sound</button>
+      <button class="jelly-btn option-btn" id="mode-choose" onclick="setMode('choose')">👀 Pick the word</button>
+      <button class="jelly-btn option-btn" id="mode-spell"  onclick="setMode('spell')">✏️ Spell it</button>
+    </div>
+  </div>
+</div>
+
+<div id="loading">Loading question…</div>
+
+<section class="game-panel wizard-panel" id="ss-main" style="display:none">
+
+  <div class="sound-chip" id="ss-chip" style="display:none">
+    Today's sound: <strong id="ss-grapheme">ai</strong>
+  </div>
+
+  <p class="instruction" id="ss-instruction"></p>
+
+  <button class="big-btn btn-listen" id="ss-listen" onclick="sayWord()">
+    🔊 Listen to the word
+  </button>
+
+  <!-- INSERT MODE: gapped word -->
+  <div id="ss-gapped" class="gapped-word" style="display:none"></div>
+
+  <!-- INSERT + CHOOSE: option buttons -->
+  <div class="options-grid" id="ss-options" style="display:none"></div>
+
+  <!-- SPELL MODE -->
+  <div id="ss-spell-area" style="display:none">
+    <div class="spelling-input-area">
+      <input class="spelling-input" id="ss-input" type="text" placeholder="Type Here"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <div class="letter-tiles" id="ss-tiles"></div>
+    <button class="btn btn-check" onclick="checkSpell()">✅ Check</button>
+  </div>
+
+  <div class="feedback" id="ss-feedback"></div>
+
+  <div class="game-actions" style="justify-content:center;">
+    <a class="jelly-btn btn-quiet" onclick="newQuestion()" style="cursor:pointer;">🔁 New question</a>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const QUESTION_URL = "{{ url_for('phonics_fox.api_question') }}";
+
+const tally = { right: 0, wrong: 0, streak: 0 };
+let mode = 'insert';
+let year = 'reception';
+let q = null;
+let answered = false;   // option modes: only the first tap counts
+
+function recordResult(correct) {
+  if (correct) { tally.right++; tally.streak++; }
+  else         { tally.wrong++; tally.streak = 0; }
+  document.getElementById('ss-right').textContent  = tally.right;
+  document.getElementById('ss-wrong').textContent  = tally.wrong;
+  document.getElementById('ss-total').textContent  = tally.right + tally.wrong;
+  document.getElementById('ss-streak').textContent = tally.streak;
+}
+
+function setYear(y) {
+  year = y;
+  ['reception', 'year1', 'year2'].forEach(k =>
+    document.getElementById(`year-${k}`).classList.toggle('is-active', k === y));
+  newQuestion();
+}
+
+function setMode(m) {
+  mode = m;
+  ['insert', 'choose', 'spell'].forEach(k =>
+    document.getElementById(`mode-${k}`).classList.toggle('is-active', k === m));
+  newQuestion();
+}
+
+async function newQuestion() {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('ss-main').style.display = 'none';
+  document.getElementById('ss-feedback').className = 'feedback';
+
+  const res = await fetch(`${QUESTION_URL}?mode=${mode}&year=${year}`);
+  q = await res.json();
+  answered = false;
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('ss-main').style.display = 'block';
+
+  const chip = document.getElementById('ss-chip');
+  const gapped = document.getElementById('ss-gapped');
+  const options = document.getElementById('ss-options');
+  const spellArea = document.getElementById('ss-spell-area');
+  const instruction = document.getElementById('ss-instruction');
+
+  gapped.style.display = 'none';
+  options.style.display = 'none';
+  spellArea.style.display = 'none';
+  chip.style.display = 'none';
+
+  if (mode === 'insert') {
+    instruction.textContent = 'Which sound is missing from the word?';
+    chip.style.display = 'inline-flex';
+    document.getElementById('ss-grapheme').textContent = '?';
+    gapped.style.display = 'block';
+    gapped.textContent = q.gapped;
+    options.style.display = 'grid';
+    options.innerHTML = '';
+    q.options.forEach(g => {
+      const b = document.createElement('button');
+      b.className = 'jelly-btn option-btn ss-option';
+      b.textContent = g;
+      b.onclick = () => pickOption(b, g, g === q.grapheme);
+      options.appendChild(b);
+    });
+
+  } else if (mode === 'choose') {
+    instruction.textContent = 'Listen, then tap the word spelled the right way!';
+    options.style.display = 'grid';
+    options.innerHTML = '';
+    q.options.forEach(w => {
+      const b = document.createElement('button');
+      b.className = 'jelly-btn option-btn ss-option';
+      b.textContent = w;
+      b.onclick = () => pickOption(b, w, w === q.word);
+      options.appendChild(b);
+    });
+
+  } else {
+    instruction.textContent = 'Listen carefully, then spell the word!';
+    spellArea.style.display = 'block';
+    document.getElementById('ss-input').value = '';
+    document.getElementById('ss-tiles').innerHTML = '';
+    document.getElementById('ss-input').focus();
+  }
+
+  sayWord();   // hear it straight away
+}
+
+function pickOption(btn, value, correct) {
+  if (!answered) { recordResult(correct); answered = true; }
+
+  if (correct) {
+    btn.classList.add('ss-right');
+    if (mode === 'insert') {
+      document.getElementById('ss-gapped').textContent = q.word;
+      document.getElementById('ss-grapheme').textContent = q.grapheme;
+    }
+    showMsg(`🎉 Yes! ${q.word} — the sound is "${q.grapheme}"!`, 'great');
+    launchEmojis(['⭐', '🎊', '✨', '👂']);
+    document.querySelectorAll('.ss-option').forEach(b => b.disabled = true);
+    speak(q.word);
+    setTimeout(newQuestion, 2000);
+  } else {
+    btn.classList.add('ss-wrong');
+    btn.disabled = true;
+    showMsg('Not that one — listen again!', 'keep-going');
+    speak(q.word);
+  }
+}
+
+/* ===== SPELL MODE ===== */
+function checkSpell() {
+  const input = document.getElementById('ss-input').value.trim().toLowerCase();
+  if (!input) { showMsg('Type the word first!', 'keep-going'); return; }
+
+  const correct = input === q.word;
+  recordResult(correct);
+  renderComparison(input, q.word);
+
+  if (correct) {
+    showMsg(`🎉 Perfect! ${q.word} has the "${q.grapheme}" sound!`, 'great');
+    launchEmojis(['⭐', '🎊', '✨', '💫']);
+    setTimeout(newQuestion, 2200);
+  } else {
+    showMsg('Good try — check the letters in red!', 'keep-going');
+    speak(q.word);
+  }
+}
+
+function renderComparison(input, answer) {
+  const tiles = document.getElementById('ss-tiles');
+  tiles.innerHTML = '';
+  const maxLen = Math.max(input.length, answer.length);
+  for (let i = 0; i < maxLen; i++) {
+    const t = document.createElement('div');
+    t.className = 'letter-tile';
+    t.textContent = answer[i] ? answer[i].toUpperCase() : '';
+    const ok = input[i] === answer[i];
+    t.style.borderColor = ok ? 'var(--good)' : 'var(--bad)';
+    t.style.background = ok ? 'var(--good-soft)' : 'var(--bad-soft)';
+    t.style.animationDelay = (i * 0.08) + 's';
+    tiles.appendChild(t);
+  }
+}
+
+/* ===== speech: Puter if signed in, browser voice otherwise ===== */
+function sayWord() { if (q) speak(q.word); }
+
+function speak(text) {
+  if (window.puter && puter.ai && typeof puter.ai.txt2speech === 'function'
+      && puter.auth && puter.auth.isSignedIn && puter.auth.isSignedIn()) {
+    puter.ai.txt2speech(text, { voice: 'Amy', engine: 'neural', language: 'en-GB' })
+      .then(a => a.play())
+      .catch(() => browserSpeak(text));
+  } else {
+    browserSpeak(text);
+  }
+}
+
+function browserSpeak(text) {
+  if (!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-GB';
+  u.rate = 0.8;
+  u.pitch = 1.1;
+  speechSynthesis.speak(u);
+}
+
+function launchEmojis(emojis) {
+  for (let i = 0; i < 6; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'emoji-float';
+      el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      el.style.left = (20 + Math.random() * 60) + 'vw';
+      el.style.top = (30 + Math.random() * 40) + 'vh';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 1600);
+    }, i * 150);
+  }
+}
+
+document.getElementById('ss-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { checkSpell(); e.preventDefault(); }
+});
+
+newQuestion();
+</script>
+{% endblock %}

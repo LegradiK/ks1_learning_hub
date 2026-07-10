@@ -16,6 +16,8 @@ def create_app():
     from app.sudoku import bp as sudoku_bp
     from app.money_counter import bp as money_counter_bp
     from app.clock_master import bp as clock_master_bp
+    from app.match_pairs import bp as match_pairs_bp
+    from app.phonics_fox import bp as phonics_fox_bp
 
     app.register_blueprint(hub_bp)                                    # "/"
     app.register_blueprint(letter_quest_bp, url_prefix="/letter-quest")
@@ -24,5 +26,7 @@ def create_app():
     app.register_blueprint(sudoku_bp, url_prefix="/sudoku")
     app.register_blueprint(money_counter_bp, url_prefix="/money-counter")
     app.register_blueprint(clock_master_bp, url_prefix="/clock-master")
+    app.register_blueprint(match_pairs_bp, url_prefix="/match-pairs")
+    app.register_blueprint(phonics_fox_bp, url_prefix="/phonics-fox")
 
     return app

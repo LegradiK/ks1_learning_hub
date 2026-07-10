@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Match Pairs{% endblock %}
+{% block theme %}theme-pairs{% endblock %}
+
+{% block content %}
+<header class="game-header">
+  <span class="subject-badge" aria-hidden="true">🃏</span>
+  <div>
+    <h1>Match Pairs</h1>
+    <p class="game-sub">Flip the cards and match each picture to its word!</p>
+  </div>
+  <div class="score-bar">
+    <div class="sc sc-streak"><div class="sc-val" id="mp-found">0</div><div class="sc-lbl">🎯 pairs</div></div>
+    <div class="sc"><div class="sc-val" id="mp-flips">0</div><div class="sc-lbl">🔄 flips</div></div>
+    <div class="sc"><div class="sc-val" id="mp-best">–</div><div class="sc-lbl">🏆 best</div></div>
+  </div>
+</header>
+
+<div class="md-controls">
+  <div class="control-group">
+    <span class="control-label" style="min-width:auto;">Level</span>
+    <div class="option-row">
+      <button class="jelly-btn option-btn is-active" id="diff-easy"       onclick="setDifficulty('easy')">🌱 Easy (4)</button>
+      <button class="jelly-btn option-btn" id="diff-medium"     onclick="setDifficulty('medium')">🌿 Medium (6)</button>
+      <button class="jelly-btn option-btn" id="diff-hard"       onclick="setDifficulty('hard')">🌳 Hard (10)</button>
+      <button class="jelly-btn option-btn" id="diff-extra_hard" onclick="setDifficulty('extra_hard')">🔥 Extra hard (16)</button>
+    </div>
+    <button class="btn btn-new" onclick="newGame()" style="margin-left:auto;">🎲 New game</button>
+  </div>
+</div>
+
+<div id="loading">Shuffling cards…</div>
+
+<div id="win-banner" class="win-banner">
+  <h2>⭐ You found them all! ⭐</h2>
+  <p id="win-msg"></p>
+</div>
+
+<div class="mp-board" id="mp-board" style="display:none"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const BOARD_URL = "{{ url_for('match_pairs.api_board') }}";
+
+/* columns per difficulty — rows follow automatically */
+const COLS = { easy: 4, medium: 4, hard: 5, extra_hard: 8 };
+const MISS_DELAY = { easy: 1500, medium: 1200, hard: 1000, extra_hard: 1000 };
+
+let difficulty = 'easy';
+let totalPairs = 0;
+let matched = 0;
+let flips = 0;
+let first = null;       // first flipped card this turn
+let locked = false;     // true while a wrong pair is on show
+const best = {};        // best flip-count per difficulty, this session
+
+function setDifficulty(d) {
+  difficulty = d;
+  ['easy', 'medium', 'hard', 'extra_hard'].forEach(k =>
+    document.getElementById(`diff-${k}`).classList.toggle('is-active', k === d));
+  newGame();
+}
+
+async function newGame() {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('mp-board').style.display = 'none';
+  document.getElementById('win-banner').style.display = 'none';
+
+  const res = await fetch(`${BOARD_URL}?difficulty=${difficulty}`);
+  const board = await res.json();
+
+  totalPairs = board.pairs;
+  matched = 0;
+  flips = 0;
+  first = null;
+  locked = false;
+  updateScore();
+
+  const el = document.getElementById('mp-board');
+  el.innerHTML = '';
+  el.style.gridTemplateColumns = `repeat(${COLS[difficulty]}, 1fr)`;
+  el.className = 'mp-board mp-' + difficulty;
+
+  board.cards.forEach(c => {
+    const card = document.createElement('button');
+    card.className = 'mp-card';
+    card.dataset.pair = c.pair;
+    card.dataset.type = c.type;
+    card.setAttribute('aria-label', 'Face-down card');
+    card.innerHTML = `
+      <div class="mp-inner">
+        <div class="mp-face mp-back">❓</div>
+        <div class="mp-face mp-front ${c.type === 'pic' ? 'mp-pic' : 'mp-word'}">${c.face}</div>
+      </div>`;
+    card.onclick = () => flipCard(card);
+    el.appendChild(card);
+  });
+
+  document.getElementById('loading').style.display = 'none';
+  el.style.display = 'grid';
+}
+
+function flipCard(card) {
+  if (locked || card === first) return;
+  if (card.classList.contains('flipped') || card.classList.contains('matched')) return;
+
+  card.classList.add('flipped');
+
+  if (!first) { first = card; return; }   // first of the pair — wait for second
+
+  flips++;
+  updateScore();
+
+  const isMatch = card.dataset.pair === first.dataset.pair
+               && card.dataset.type !== first.dataset.type;   // pic must meet word
+
+  if (isMatch) {
+    const word = (card.dataset.type === 'word' ? card : first)
+                   .querySelector('.mp-front').textContent;
+    card.classList.add('matched');
+    first.classList.add('matched');
+    first = null;
+    matched++;
+    updateScore();
+    speak(word);                          // say the word as they take the pair
+    if (matched === totalPairs) celebrate();
+  } else {
+    locked = true;                        // memorise time!
+    setTimeout(() => {
+      card.classList.remove('flipped');
+      first.classList.remove('flipped');
+      first = null;
+      locked = false;
+    }, MISS_DELAY[difficulty]);
+  }
+}
+
+function updateScore() {
+  document.getElementById('mp-found').textContent = `${matched}/${totalPairs || '–'}`;
+  document.getElementById('mp-flips').textContent = flips;
+  document.getElementById('mp-best').textContent =
+    best[difficulty] !== undefined ? best[difficulty] : '–';
+}
+
+function celebrate() {
+  if (best[difficulty] === undefined || flips < best[difficulty]) {
+    best[difficulty] = flips;
+  }
+  updateScore();
+  document.getElementById('win-msg').textContent =
+    `You matched all ${totalPairs} pairs in ${flips} flips!`;
+  document.getElementById('win-banner').style.display = 'block';
+  launchEmojis(['🎉', '🌟', '🏆', '🎊', '💫']);
+}
+
+/* ===== speech: Puter if available, browser voice otherwise ===== */
+function speak(text) {
+  if (window.puter && puter.ai && typeof puter.ai.txt2speech === 'function'
+      && puter.auth && puter.auth.isSignedIn && puter.auth.isSignedIn()) {
+    puter.ai.txt2speech(text, { voice: 'Amy', engine: 'neural', language: 'en-GB' })
+      .then(a => a.play())
+      .catch(() => browserSpeak(text));
+  } else {
+    browserSpeak(text);
+  }
+}
+
+function browserSpeak(text) {
+  if (!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-GB';
+  u.rate = 0.85;
+  u.pitch = 1.1;
+  speechSynthesis.speak(u);
+}
+
+function launchEmojis(emojis) {
+  for (let i = 0; i < 6; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'emoji-float';
+      el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      el.style.left = (20 + Math.random() * 60) + 'vw';
+      el.style.top = (30 + Math.random() * 40) + 'vh';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 1600);
+    }, i * 150);
+  }
+}
+newGame();
+</script>
+{% endblock %}

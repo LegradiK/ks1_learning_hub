@@ -28,6 +28,8 @@
           <a class="dropdown-item" href="{{ url_for('sudoku.game') }}">🧩 Sudoku</a>
           <a class="dropdown-item" href="{{ url_for('money_counter.game') }}">💰 Money Counter</a>
           <a class="dropdown-item" href="{{ url_for('clock_master.game') }}">⏰ Clock Master</a>
+          <a class="dropdown-item" href="{{ url_for('match_pairs.game') }}">🃏 Match Pairs</a>
+          <a class="dropdown-item" href="{{ url_for('match_pairs.game') }}">🦊 Phonics Fox</a>
         </div>
       </details>
 
@@ -40,6 +42,8 @@
           <button class="dropdown-item" onclick="openHowto('sudoku')">🧩 Sudoku</button>
           <button class="dropdown-item" onclick="openHowto('money-counter')">💰 Money Counter</button>
           <button class="dropdown-item" onclick="openHowto('clock-master')">⏰ Clock Master</button>
+          <button class="dropdown-item" onclick="openHowto('match-pairs')">🃏 Match Pairs</button>
+          <button class="dropdown-item" onclick="openHowto('phonics-fox')">🦊 Phonics Fox</button>
         </div>
       </details>
     </div>
@@ -220,6 +224,31 @@
           <li>🌳 <strong>Quarters</strong> — quarter past and quarter to join in</li>
           <li>🔥 <strong>5 minutes</strong> — any time on the clock, like twenty-five past 7!</li>
           <li>Right answers build your 🔥 <strong>streak</strong> — press <strong>🔁 New question</strong> anytime</li>
+        </ul>
+      </div>
+
+      <div class="howto-page" id="howto-match-pairs" style="display:none">
+        <h2>🃏 Match Pairs</h2>
+        <p>A memory game — find each picture's word hiding on the board!</p>
+
+        <h3>🎯 How to play</h3>
+        <ul>
+          <li>All the cards start face down. Tap a card to flip it over</li>
+          <li>Then tap a second card — you're looking for a <strong>picture</strong> and its <strong>word</strong>, like 🐱 and <strong>cat</strong></li>
+          <li>If they match, you take the pair and it disappears from the board — listen for the word!</li>
+          <li>If they don't match, take a good look before they flip back — <strong>remember where they are</strong> for later!</li>
+          <li>Match every pair to win</li>
+        </ul>
+
+        <hr class="modal-divider">
+
+        <h3>⭐ Levels & scoring</h3>
+        <ul>
+          <li>🌱 <strong>Easy</strong> — 4 pairs with little words like cat and sun</li>
+          <li>🌿 <strong>Medium</strong> — 6 pairs, slightly trickier words</li>
+          <li>🌳 <strong>Hard</strong> — 10 pairs to remember</li>
+          <li>🔥 <strong>Extra hard</strong> — a whopping 16 pairs! Play with a grown-up and see who remembers best</li>
+          <li>Your <strong>🔄 flips</strong> are counted — fewer flips means a sharper memory. Can you beat your 🏆 <strong>best</strong> score?</li>
         </ul>
       </div>
 
