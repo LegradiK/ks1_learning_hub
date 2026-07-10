@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}Coin Counter{% endblock %}
+{% block theme %}theme-money{% endblock %}
+
+{% block content %}
+{% include 'money_counter/_money_sprite.html' %}
+
+<header class="game-header">
+  <span class="subject-badge" aria-hidden="true">🪙</span>
+  <div>
+    <h1>Money Counter</h1>
+    <p class="game-sub">Count the money — or make the amount yourself!</p>
+  </div>
+  <div class="score-bar">
+    <div class="sc"><div class="sc-val" id="cc-right">0</div><div class="sc-lbl">😀 right</div></div>
+    <div class="sc"><div class="sc-val" id="cc-wrong">0</div><div class="sc-lbl">🙈 wrong</div></div>
+    <div class="sc"><div class="sc-val" id="cc-total">0</div><div class="sc-lbl">🧮 total</div></div>
+    <div class="sc sc-streak"><div class="sc-val" id="cc-streak">0</div><div class="sc-lbl">🔥 streak</div></div>
+  </div>
+</header>
+
+<div class="md-controls">
+  <div class="control-group">
+    <span class="control-label" style="min-width:auto;">Game</span>
+    <div class="option-row">
+      <button class="jelly-btn option-btn is-active" id="mode-count" onclick="setMode('count')">🔍 Count it</button>
+      <button class="jelly-btn option-btn" id="mode-make" onclick="setMode('make')">🛒 Make it</button>
+    </div>
+    <span class="control-label" style="min-width:auto; margin-left:0.8rem;">Level</span>
+    <div class="option-row">
+      <button class="jelly-btn option-btn is-active" id="diff-easy"   onclick="setDifficulty('easy')">🌱 Easy</button>
+      <button class="jelly-btn option-btn" id="diff-medium" onclick="setDifficulty('medium')">🌿 Medium</button>
+      <button class="jelly-btn option-btn" id="diff-hard"   onclick="setDifficulty('hard')">🌳 Hard</button>
+      <button class="jelly-btn option-btn" id="diff-expert" onclick="setDifficulty('expert')">💷 Expert</button>
+    </div>
+  </div>
+</div>
+
+<div id="loading">Loading question…</div>
+
+<section class="game-panel wizard-panel" id="cc-main" style="display:none">
+
+  <!-- ===== COUNT MODE ===== -->
+  <div id="count-panel">
+    <p class="instruction">How much money is this?</p>
+    <div class="money-row" id="count-coins"></div>
+    <div class="cc-answer-area">
+      <input class="spelling-input cc-answer" id="cc-input" type="text"
+             inputmode="decimal" autocomplete="off" placeholder="e.g. 72p or £1.50"
+             aria-label="Your answer">
+      <button class="btn btn-check" onclick="checkCount()">✅ Check</button>
+    </div>
+  </div>
+
+  <!-- ===== MAKE MODE ===== -->
+  <div id="make-panel" style="display:none">
+    <p class="instruction">Can you make <strong id="cc-target">…</strong>?</p>
+
+    <span class="hint" id="hint">Tap money above to put it in your purse — tap it again to take it out</span>
+
+
+    <div class="money-tray" id="make-tray">
+    </div>
+
+    <p class="zone-label">👛 Your purse</p>
+    <div class="purse" id="purse"></div>
+
+    <div class="purse-total">
+      In your purse: <strong id="purse-total">0p</strong>
+    </div>
+
+    <button class="btn btn-check" onclick="checkMake()">✅ Check</button>
+  </div>
+
+  <div class="feedback" id="cc-feedback"></div>
+
+  <div class="game-actions" style="justify-content:center;">
+    <a class="jelly-btn btn-quiet" onclick="newQuestion()" style="cursor:pointer;">🔁 New question</a>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const QUESTION_URL = "{{ url_for('money_counter.api_question') }}";
+
+/* on-screen widths per value (pence) — relative size teaches recognition */
+const MONEY_SIZE = { 1: 52, 2: 66, 5: 46, 10: 60, 20: 56, 50: 70, 100: 60, 200: 74 };
+const NOTE_WIDTH = 150;
+
+const tally = { right: 0, wrong: 0, streak: 0 };
+let mode = 'count';
+let difficulty = 'easy';
+let q = null;
+let purse = [];   // values currently in the purse (make mode)
+
+function recordResult(correct) {
+  if (correct) { tally.right++; tally.streak++; }
+  else         { tally.wrong++; tally.streak = 0; }
+  document.getElementById('cc-right').textContent  = tally.right;
+  document.getElementById('cc-wrong').textContent  = tally.wrong;
+  document.getElementById('cc-total').textContent  = tally.right + tally.wrong;
+  document.getElementById('cc-streak').textContent = tally.streak;
+}
+
+function formatPence(p) {
+  if (p < 100) return `${p}p`;
+  const pounds = Math.floor(p / 100), rest = p % 100;
+  return rest === 0 ? `£${pounds}` : `£${pounds}.${String(rest).padStart(2, '0')}`;
+}
+
+/* build an <svg><use> for a coin or note */
+function moneySVG(value) {
+  const isNote = value >= 500;
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', isNote ? '0 0 200 110' : '0 0 100 100');
+  svg.setAttribute('class', 'money' + (isNote ? ' money-note' : ''));
+  svg.setAttribute('width', isNote ? NOTE_WIDTH : MONEY_SIZE[value]);
+  svg.setAttribute('aria-label', formatPence(value));
+  const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+  use.setAttribute('href', (isNote ? '#note-' : '#coin-') + value);
+  svg.appendChild(use);
+  return svg;
+}
+
+function setMode(m) {
+  mode = m;
+  ['count', 'make'].forEach(k =>
+    document.getElementById(`mode-${k}`).classList.toggle('is-active', k === m));
+  newQuestion();
+}
+
+function setDifficulty(d) {
+  difficulty = d;
+  ['easy', 'medium', 'hard', 'expert'].forEach(k =>
+    document.getElementById(`diff-${k}`).classList.toggle('is-active', k === d));
+  newQuestion();
+}
+
+async function newQuestion() {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('cc-main').style.display = 'none';
+  document.getElementById('cc-feedback').className = 'feedback';
+
+  const res = await fetch(`${QUESTION_URL}?mode=${mode}&difficulty=${difficulty}`);
+  q = await res.json();
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('cc-main').style.display = 'block';
+  document.getElementById('count-panel').style.display = mode === 'count' ? 'block' : 'none';
+  document.getElementById('make-panel').style.display  = mode === 'make'  ? 'block' : 'none';
+
+  if (mode === 'count') renderCount();
+  else renderMake();
+}
+
+/* ===== COUNT MODE ===== */
+function renderCount() {
+  const row = document.getElementById('count-coins');
+  row.innerHTML = '';
+  q.coins.forEach((v, i) => {
+    const svg = moneySVG(v);
+    svg.style.animationDelay = (i * 0.08) + 's';
+    svg.classList.add('money-pop');
+    row.appendChild(svg);
+  });
+  const inp = document.getElementById('cc-input');
+  inp.value = '';
+  inp.focus();
+}
+
+/* accepts "72", "72p", "£1.50", "1.50" — decimals/£ mean pounds */
+function parseAnswer(text) {
+  const t = text.trim().toLowerCase().replace(/\s+/g, '');
+  if (!t) return null;
+  const hasPound = t.includes('£');
+  const cleaned = t.replace(/[£p]/g, '');
+  if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return null;
+  if (hasPound || cleaned.includes('.')) {
+    return Math.round(parseFloat(cleaned) * 100);   // pounds -> pence
+  }
+  return parseInt(cleaned, 10);                     // plain number = pence
+}
+
+function checkCount() {
+  const answer = parseAnswer(document.getElementById('cc-input').value);
+  if (answer === null) {
+    showMsg('Type an amount like 72p or £1.50', 'keep-going');
+    return;
+  }
+  const correct = answer === q.total;
+  recordResult(correct);
+  if (correct) {
+    showMsg(`🎉 Yes! That's ${q.total_label}!`, 'great');
+    launchEmojis(['⭐', '🎊', '✨', '💫']);
+    setTimeout(newQuestion, 1800);
+  } else {
+    showMsg(`Not quite — count again carefully!`, 'keep-going');
+  }
+}
+
+/* ===== MAKE MODE ===== */
+function renderMake() {
+  purse = [];
+  document.getElementById('cc-target').textContent = q.target_label;
+
+  const tray = document.getElementById('make-tray');
+  tray.innerHTML = '';
+  q.coins.forEach(v => {
+    const b = document.createElement('button');
+    b.className = 'money-btn';
+    b.setAttribute('aria-label', 'Add ' + formatPence(v));
+    b.appendChild(moneySVG(v));
+    b.onclick = () => addToPurse(v);
+    tray.appendChild(b);
+  });
+
+  renderPurse();
+}
+
+function addToPurse(v) {
+  purse.push(v);
+  renderPurse();
+}
+
+function removeFromPurse(index) {
+  purse.splice(index, 1);
+  renderPurse();
+}
+
+function renderPurse() {
+  const el = document.getElementById('purse');
+  el.innerHTML = '';
+  purse.forEach((v, i) => {
+    const b = document.createElement('button');
+    b.className = 'money-btn in-purse';
+    b.setAttribute('aria-label', 'Remove ' + formatPence(v));
+    b.appendChild(moneySVG(v));
+    b.classList.add('money-pop');
+    b.onclick = () => removeFromPurse(i);
+    el.appendChild(b);
+  });
+  const total = purse.reduce((a, b) => a + b, 0);
+  document.getElementById('purse-total').textContent = formatPence(total);
+}
+
+function checkMake() {
+  const total = purse.reduce((a, b) => a + b, 0);
+  if (!purse.length) {
+    showMsg('Your purse is empty — tap some money first!', 'keep-going');
+    return;
+  }
+  const correct = total === q.target;
+  recordResult(correct);
+  if (correct) {
+    showMsg(`🎉 Perfect! You made ${q.target_label}!`, 'great');
+    launchEmojis(['⭐', '🎊', '✨', '💰']);
+    setTimeout(newQuestion, 1800);
+  } else if (total < q.target) {
+    showMsg(`You have ${formatPence(total)} — you need a bit more!`, 'keep-going');
+  } else {
+    showMsg(`You have ${formatPence(total)} — that's too much!`, 'keep-going');
+  }
+}
+
+/* ===== shared ===== */
+function showMsg(msg, type) {
+  const el = document.getElementById('cc-feedback');
+  el.textContent = msg;
+  el.className = 'feedback show ' + type;
+}
+
+function launchEmojis(emojis) {
+  for (let i = 0; i < 6; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'emoji-float';
+      el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      el.style.left = (20 + Math.random() * 60) + 'vw';
+      el.style.top = (30 + Math.random() * 40) + 'vh';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 1600);
+    }, i * 150);
+  }
+}
+
+document.getElementById('cc-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { checkCount(); e.preventDefault(); }
+});
+
+newQuestion();
+</script>
+{% endblock %}

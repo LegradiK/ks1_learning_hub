@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}Clock Master{% endblock %}
+{% block theme %}theme-clock{% endblock %}
+
+{% block content %}
+<header class="game-header">
+  <span class="subject-badge" aria-hidden="true">⏰</span>
+  <div>
+    <h1>Clock Master</h1>
+    <p class="game-sub">Become a master at reading the clock!</p>
+  </div>
+  <div class="score-bar">
+    <div class="sc"><div class="sc-val" id="cm-right">0</div><div class="sc-lbl">😀 right</div></div>
+    <div class="sc"><div class="sc-val" id="cm-wrong">0</div><div class="sc-lbl">🙈 wrong</div></div>
+    <div class="sc"><div class="sc-val" id="cm-total">0</div><div class="sc-lbl">🧮 total</div></div>
+    <div class="sc sc-streak"><div class="sc-val" id="cm-streak">0</div><div class="sc-lbl">🔥 streak</div></div>
+  </div>
+</header>
+
+<div class="md-controls">
+  <div class="control-group">
+    <span class="control-label" style="min-width:auto;">Game</span>
+    <div class="option-row">
+      <button class="jelly-btn option-btn is-active" id="mode-read" onclick="setMode('read')">👀 Read it</button>
+      <button class="jelly-btn option-btn" id="mode-set" onclick="setMode('set')">🕹 Set it</button>
+    </div>
+    <span class="control-label" style="min-width:auto; margin-left:0.8rem;">Level</span>
+    <div class="option-row">
+      <button class="jelly-btn option-btn is-active" id="diff-oclock"  onclick="setDifficulty('oclock')">🌱 O'clock</button>
+      <button class="jelly-btn option-btn" id="diff-half"    onclick="setDifficulty('half')">🌿 Half past</button>
+      <button class="jelly-btn option-btn" id="diff-quarter" onclick="setDifficulty('quarter')">🌳 Quarters</button>
+      <button class="jelly-btn option-btn" id="diff-five"    onclick="setDifficulty('five')">🔥 5 minutes</button>
+    </div>
+  </div>
+</div>
+
+<div id="loading">Loading question…</div>
+
+<section class="game-panel wizard-panel" id="cm-main" style="display:none">
+
+  <p class="instruction" id="cm-instruction">What time does the clock show?</p>
+
+  <div class="clock-area">
+    <svg class="clock-svg" id="clock" viewBox="0 0 200 200">
+      <circle cx="100" cy="100" r="96" fill="var(--panel)" stroke="var(--accent)" stroke-width="7"/>
+      <g id="clock-ticks"></g>
+      <g id="clock-numbers"></g>
+      <line id="hour-hand"   x1="100" y1="100" x2="100" y2="58" stroke="var(--ink)"
+            stroke-width="9" stroke-linecap="round"/>
+      <line id="minute-hand" x1="100" y1="100" x2="100" y2="32" stroke="var(--accent)"
+            stroke-width="6" stroke-linecap="round"/>
+      <!-- fat invisible grab handles for small fingers (set mode) -->
+      <line id="hour-grab"   x1="100" y1="100" x2="100" y2="58" stroke="transparent"
+            stroke-width="30" stroke-linecap="round" data-hand="hour"/>
+      <line id="minute-grab" x1="100" y1="100" x2="100" y2="32" stroke="transparent"
+            stroke-width="30" stroke-linecap="round" data-hand="minute"/>
+      <circle cx="100" cy="100" r="7" fill="var(--ink)"/>
+    </svg>
+  </div>
+
+  <!-- READ MODE: answer options -->
+  <div class="options-grid" id="cm-options"></div>
+
+  <!-- SET MODE: check button -->
+  <div id="cm-set-actions" style="display:none">
+    <button class="btn btn-check" onclick="checkSet()">✅ Check</button>
+  </div>
+
+  <div class="feedback" id="cm-feedback"></div>
+
+  <div class="game-actions" style="justify-content:center;">
+    <a class="jelly-btn btn-quiet" onclick="newQuestion()" style="cursor:pointer;">🔁 New question</a>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const QUESTION_URL = "{{ url_for('clock_master.api_question') }}";
+
+const tally = { right: 0, wrong: 0, streak: 0 };
+let mode = 'read';
+let difficulty = 'oclock';
+let q = null;
+let answered = false;                 // read mode: only first tap counts
+let setHands = { hour: 12, minute: 0 };   // set mode: where the child has put them
+let snapPool = [0];                   // valid minutes for the current difficulty
+
+const SNAP = { oclock: [0], half: [0, 30], quarter: [0, 15, 30, 45],
+               five: Array.from({length: 12}, (_, i) => i * 5) };
+
+function recordResult(correct) {
+  if (correct) { tally.right++; tally.streak++; }
+  else         { tally.wrong++; tally.streak = 0; }
+  document.getElementById('cm-right').textContent  = tally.right;
+  document.getElementById('cm-wrong').textContent  = tally.wrong;
+  document.getElementById('cm-total').textContent  = tally.right + tally.wrong;
+  document.getElementById('cm-streak').textContent = tally.streak;
+}
+
+/* ===== clock face ===== */
+function buildFace() {
+  const ticks = document.getElementById('clock-ticks');
+  const nums = document.getElementById('clock-numbers');
+  for (let i = 0; i < 60; i++) {
+    const a = i * 6 * Math.PI / 180;
+    const isHour = i % 5 === 0;
+    const r1 = isHour ? 84 : 89, r2 = 93;
+    const t = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    t.setAttribute('x1', 100 + r1 * Math.sin(a));
+    t.setAttribute('y1', 100 - r1 * Math.cos(a));
+    t.setAttribute('x2', 100 + r2 * Math.sin(a));
+    t.setAttribute('y2', 100 - r2 * Math.cos(a));
+    t.setAttribute('stroke', isHour ? 'var(--ink)' : 'var(--ink-soft)');
+    t.setAttribute('stroke-width', isHour ? 3 : 1.5);
+    ticks.appendChild(t);
+  }
+  for (let n = 1; n <= 12; n++) {
+    const a = n * 30 * Math.PI / 180;
+    const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    txt.setAttribute('x', 100 + 72 * Math.sin(a));
+    txt.setAttribute('y', 100 - 72 * Math.cos(a));
+    txt.setAttribute('class', 'clock-num');
+    txt.textContent = n;
+    nums.appendChild(txt);
+  }
+}
+
+function rotate(id, deg) {
+  document.getElementById(id).setAttribute('transform', `rotate(${deg} 100 100)`);
+}
+
+function showTime(h, m) {
+  const minuteAngle = m * 6;
+  const hourAngle = (h % 12) * 30 + m * 0.5;   // hour hand creeps with minutes
+  rotate('minute-hand', minuteAngle);
+  rotate('minute-grab', minuteAngle);
+  rotate('hour-hand', hourAngle);
+  rotate('hour-grab', hourAngle);
+}
+
+/* ===== pickers ===== */
+function setMode(m) {
+  mode = m;
+  ['read', 'set'].forEach(k =>
+    document.getElementById(`mode-${k}`).classList.toggle('is-active', k === m));
+  newQuestion();
+}
+
+function setDifficulty(d) {
+  difficulty = d;
+  ['oclock', 'half', 'quarter', 'five'].forEach(k =>
+    document.getElementById(`diff-${k}`).classList.toggle('is-active', k === d));
+  newQuestion();
+}
+
+/* ===== questions ===== */
+async function newQuestion() {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('cm-main').style.display = 'none';
+  document.getElementById('cm-feedback').className = 'feedback';
+
+  const res = await fetch(`${QUESTION_URL}?mode=${mode}&difficulty=${difficulty}`);
+  q = await res.json();
+  answered = false;
+  snapPool = SNAP[difficulty];
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('cm-main').style.display = 'block';
+
+  const opts = document.getElementById('cm-options');
+  const setActions = document.getElementById('cm-set-actions');
+  const svg = document.getElementById('clock');
+
+  if (mode === 'read') {
+    document.getElementById('cm-instruction').textContent = 'What time does the clock show?';
+    showTime(q.hour, q.minute);
+    svg.classList.remove('settable');
+    setActions.style.display = 'none';
+    opts.style.display = 'grid';
+    opts.innerHTML = '';
+    q.options.forEach(phrase => {
+      const b = document.createElement('button');
+      b.className = 'jelly-btn option-btn cm-option';
+      b.textContent = phrase;
+      b.onclick = () => pickOption(b, phrase);
+      opts.appendChild(b);
+    });
+  } else {
+    document.getElementById('cm-instruction').innerHTML =
+      `Can you make the clock say <strong>${q.phrase}</strong>?`;
+    setHands = { hour: 12, minute: 0 };
+    showTime(12, 0);
+    svg.classList.add('settable');
+    opts.style.display = 'none';
+    setActions.style.display = 'block';
+  }
+}
+
+/* ===== READ MODE ===== */
+function pickOption(btn, phrase) {
+  const correct = phrase === q.phrase;
+  if (!answered) { recordResult(correct); answered = true; }
+
+  if (correct) {
+    btn.classList.add('cm-right');
+    showMsg(`🎉 Yes! It's ${q.phrase}!`, 'great');
+    launchEmojis(['⭐', '🎊', '✨', '⏰']);
+    document.querySelectorAll('.cm-option').forEach(b => b.disabled = true);
+    setTimeout(newQuestion, 1800);
+  } else {
+    btn.classList.add('cm-wrong');
+    btn.disabled = true;
+    showMsg('Not that one — look at the hands again!', 'keep-going');
+  }
+}
+
+/* ===== SET MODE: drag the hands ===== */
+let dragging = null;   // 'hour' | 'minute' | null
+
+function angleFromEvent(e) {
+  const svg = document.getElementById('clock');
+  const rect = svg.getBoundingClientRect();
+  const x = e.clientX - rect.left - rect.width / 2;
+  const y = e.clientY - rect.top - rect.height / 2;
+  let deg = Math.atan2(x, -y) * 180 / Math.PI;   // 0° = twelve o'clock
+  return (deg + 360) % 360;
+}
+
+function nearestSnap(minute) {
+  let best = snapPool[0], bestDist = 99;
+  for (const s of snapPool.concat([60])) {       // 60 wraps to 0
+    const d = Math.min(Math.abs(minute - s), 60 - Math.abs(minute - s));
+    if (d < bestDist) { bestDist = d; best = s % 60; }
+  }
+  return best;
+}
+
+function startDrag(e) {
+  if (mode !== 'set') return;
+  const hand = e.target.dataset && e.target.dataset.hand;
+  if (!hand) return;
+  dragging = hand;
+  e.target.setPointerCapture(e.pointerId);
+  e.preventDefault();
+}
+
+function moveDrag(e) {
+  if (!dragging) return;
+  const deg = angleFromEvent(e);
+  if (dragging === 'minute') {
+    setHands.minute = nearestSnap(Math.round(deg / 6));
+  } else {
+    let h = Math.round(deg / 30) % 12;
+    setHands.hour = h === 0 ? 12 : h;
+  }
+  showTime(setHands.hour, setHands.minute);
+  e.preventDefault();
+}
+
+function endDrag() { dragging = null; }
+
+function checkSet() {
+  const correct = setHands.hour === q.hour && setHands.minute === q.minute;
+  recordResult(correct);
+  if (correct) {
+    showMsg(`🎉 Perfect! That's ${q.phrase}!`, 'great');
+    launchEmojis(['⭐', '🎊', '✨', '⏰']);
+    setTimeout(newQuestion, 1800);
+  } else {
+    const hints = [];
+    if (setHands.hour !== q.hour) hints.push('check the short hour hand');
+    if (setHands.minute !== q.minute) hints.push('check the long minute hand');
+    showMsg(`Not quite — ${hints.join(' and ')}!`, 'keep-going');
+  }
+}
+
+/* ===== shared ===== */
+function showMsg(msg, type) {
+  const el = document.getElementById('cm-feedback');
+  el.textContent = msg;
+  el.className = 'feedback show ' + type;
+}
+
+function launchEmojis(emojis) {
+  for (let i = 0; i < 6; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'emoji-float';
+      el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      el.style.left = (20 + Math.random() * 60) + 'vw';
+      el.style.top = (30 + Math.random() * 40) + 'vh';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 1600);
+    }, i * 150);
+  }
+}
+
+const clockSvg = document.getElementById('clock');
+clockSvg.addEventListener('pointerdown', startDrag);
+clockSvg.addEventListener('pointermove', moveDrag);
+clockSvg.addEventListener('pointerup', endDrag);
+clockSvg.addEventListener('pointercancel', endDrag);
+
+buildFace();
+newQuestion();
+</script>
+{% endblock %}

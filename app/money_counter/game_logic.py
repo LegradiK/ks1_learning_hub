@@ -1,4 +1,4 @@
-"""Coin Counter game logic — pure Python, no Flask imports.
+"""Money Counter game logic — pure Python, no Flask imports.
 
 Two modes:
   count  -> show a handful of coins/notes, the child types the total

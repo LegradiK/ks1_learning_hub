@@ -26,7 +26,8 @@
           <a class="dropdown-item" href="{{ url_for('math_drill.index') }}">🔢 Math Drill</a>
           <a class="dropdown-item" href="{{ url_for('letter_quest.game') }}">🔤 Letter Quest</a> 
           <a class="dropdown-item" href="{{ url_for('sudoku.game') }}">🧩 Sudoku</a>
-          <a class="dropdown-item" href="{{ url_for('coin_counter.game') }}">💰 Coin Counter</a>
+          <a class="dropdown-item" href="{{ url_for('money_counter.game') }}">💰 Money Counter</a>
+          <a class="dropdown-item" href="{{ url_for('clock_master.game') }}">⏰ Clock Master</a>
         </div>
       </details>
 
@@ -37,7 +38,8 @@
           <button class="dropdown-item" onclick="openHowto('math-drill')">🔢 Math Drill</button>
           <button class="dropdown-item" onclick="openHowto('letter-quest')">🔤 Letter Quest</button>
           <button class="dropdown-item" onclick="openHowto('sudoku')">🧩 Sudoku</button>
-          <button class="dropdown-item" onclick="openHowto('coin-counter')">💰 Coin Counter</button>
+          <button class="dropdown-item" onclick="openHowto('money-counter')">💰 Money Counter</button>
+          <button class="dropdown-item" onclick="openHowto('clock-master')">⏰ Clock Master</button>
         </div>
       </details>
     </div>
@@ -122,19 +124,103 @@
 
       <div class="howto-page" id="howto-sudoku" style="display:none">
         <h2>🧩 Sudoku</h2>
-        <p>Fill every row, column and box — with numbers or animals!</p>
+        <p>A puzzle of logic — no adding up needed, just clever thinking!</p>
+
+        <h3>🎯 The rules</h3>
         <ul>
-          <li>The shaded numbers are clues — they can't be changed</li>
-          <li>Tap an empty square and type a number from <strong>1 to 4</strong></li>
-          <li>Use the <strong>arrow keys</strong> to move around, and <strong>Backspace</strong> to rub one out</li>
-          <li>Filled every square? Press <strong>✅ Check</strong> or hit <strong>Enter</strong> — red squares need another look!</li>
+          <li>Every <strong>row</strong> going across needs each number exactly once</li>
+          <li>Every <strong>column</strong> going down needs each number too</li>
+          <li>And so does every <strong>box</strong> (the areas with thick borders)</li>
+          <li>On a 4×4 grid that's the numbers <strong>1 to 4</strong>, on 6×6 it's <strong>1 to 6</strong>, and on the big 9×9 it's <strong>1 to 9</strong></li>
+          <li>The shaded numbers are clues to start you off — they can't be changed</li>
+        </ul>
+
+        <hr class="modal-divider">
+
+        <h3>✏️ How to fill it in</h3>
+        <ul>
+          <li>Tap any empty square — its row and column light up to help you check for repeats</li>
+          <li>Tap a number on the <strong>number pad</strong> to fill the square, or type it on a keyboard</li>
+          <li>Made a mistake? Press <strong>Erase</strong> (or Backspace) to rub it out</li>
+          <li>Use the <strong>arrow keys</strong> to hop between squares</li>
+          <li>Top tip: find a row, column or box that's nearly full — only one number can fit in the gap!</li>
+        </ul>
+
+        <hr class="modal-divider">
+
+        <h3>🎮 Buttons & extras</h3>
+        <ul>
+          <li>Filled every square? Press <strong>✅ Check</strong> or hit <strong>Enter</strong> — green squares are right, red ones need another look</li>
+          <li>Stuck on a square? Tap it, then press <strong>💡 Reveal</strong> — the answer appears in purple so you can see which ones you had help with</li>
+          <li><strong>🐾 Animals</strong> mode swaps numbers for animals — then every row needs one of each animal instead!</li>
+          <li>Pick your challenge: grid size (4×4 → 9×9) and level (🌱 Easy → 🌳 Hard) — fewer clues means more thinking</li>
           <li><strong>🎲 New game</strong> deals a fresh puzzle; <strong>🔄 Restart</strong> clears your answers but keeps the clues</li>
         </ul>
       </div>
 
-        <div class="howto-page" id="howto-coin-counter" style="display:none">
-        <h2>💰 Coin Counter</h2>
-        <p>Count coins and notes, get expert on money counting!</p>
+      <div class="howto-page" id="howto-money-counter" style="display:none">
+        <h2>💰 Money Counter</h2>
+        <p>Get to know your pennies and pounds!</p>
+
+        <h3>🔍 Count it</h3>
+        <ul>
+          <li>Look at the money on the screen and add it all up</li>
+          <li>Type the total — like <strong>72p</strong> or <strong>£1.50</strong> — then press <strong>✅ Check</strong> or hit <strong>Enter</strong></li>
+        </ul>
+
+        <hr class="modal-divider">
+
+        <h3>🛒 Make it</h3>
+        <ul>
+          <li>Look at the amount you need to make</li>
+          <li>Tap money in the tray to pop it into your purse</li>
+          <li>Tap a money in your purse to take it back out</li>
+          <li>Watch your purse total grow, then press <strong>✅ Check</strong> when it matches!</li>
+          <li>Any coins and notes that add up right are correct — there's more than one way to make most amounts</li>
+        </ul>
+
+        <hr class="modal-divider">
+
+        <h3>⭐ Levels</h3>
+        <ul>
+          <li>🌱 <strong>Easy</strong> — little coins: 1p, 2p, 5p and 10p</li>
+          <li>🌿 <strong>Medium</strong> — adds the seven-sided 20p and 50p</li>
+          <li>🌳 <strong>Hard</strong> — adds the gold £1 and £2 coins</li>
+          <li>💷 <strong>Expert</strong> — banknotes! £5, £10, £20 and £50</li>
+          <li>Right answers build your 🔥 <strong>streak</strong> — press <strong>🔁 New question</strong> anytime for a fresh one</li>
+        </ul>
+      </div>
+
+      <div class="howto-page" id="howto-clock-master" style="display:none">
+        <h2>⏰ Clock Master</h2>
+        <p>Learn to tell the time — first read the clock, then set it yourself!</p>
+
+        <h3>👀 Read it</h3>
+        <ul>
+          <li>Look at the clock — the <strong>short hand</strong> tells you the hour, the <strong>long hand</strong> tells you the minutes</li>
+          <li>Work out the time, then tap the right answer from the choices below</li>
+          <li>Picked wrong? Look at the hands again and have another go!</li>
+        </ul>
+
+        <hr class="modal-divider">
+
+        <h3>🕹 Set it</h3>
+        <ul>
+          <li>Read the time you need to make — like <strong>half past 3</strong></li>
+          <li><strong>Drag the hands</strong> around the clock: the short one to the hour, the long one to the minutes</li>
+          <li>The hands click into place as you move them — press <strong>✅ Check</strong> when your clock looks right!</li>
+        </ul>
+
+        <hr class="modal-divider">
+
+        <h3>⭐ Levels</h3>
+        <ul>
+          <li>🌱 <strong>O'clock</strong> — times like 3 o'clock, just the hour hand to think about</li>
+          <li>🌿 <strong>Half past</strong> — the long hand points straight down at the 6</li>
+          <li>🌳 <strong>Quarters</strong> — quarter past and quarter to join in</li>
+          <li>🔥 <strong>5 minutes</strong> — any time on the clock, like twenty-five past 7!</li>
+          <li>Right answers build your 🔥 <strong>streak</strong> — press <strong>🔁 New question</strong> anytime</li>
+        </ul>
       </div>
 
     </div>

@@ -39,8 +39,11 @@
   --sudoku: #2FB78C;        /* fresh green      */
   --sudoku-soft: #E1F7EF;
 
-  --coins: #F2B705;         /* pound gold       */
-  --coins-soft: #FDF3D3;
+  --money: #F2B705;         /* pound gold       */
+  --money-soft: #FDF3D3;
+
+  --clock: #C0392B;
+  --clock-soft: #F9E3E0:
 }
 
 .theme-letters { --accent: var(--letters); --accent-soft: var(--letters-soft); }
@@ -48,7 +51,8 @@
 .theme-words   { --accent: var(--words);   --accent-soft: var(--words-soft); }
 .theme-hub     { --accent: var(--hub);     --accent-soft: var(--hub-soft); }
 .theme-sudoku  { --accent: var(--sudoku);  --accent-soft: var(--sudoku-soft); }
-.theme-coins { --accent: var(--coins); --accent-soft: var(--coins-soft); }
+.theme-money { --accent: var(--money); --accent-soft: var(--money-soft); }
+.theme-clock { --accent: var(--clock); --accent-soft: var(--clock-soft); }
 
 /* ---------- base ---------- */
 * { box-sizing: border-box; }
@@ -1348,3 +1352,91 @@ table#sd-grid td {
 .completion h2 { color: var(--good); margin: 0.4rem 0; }
 
 .stars { font-size: 1.8rem; margin-top: 0.5rem; }
+
+/* Coin Counter */
+.money-row {
+  margin-bottom: 2rem;
+}
+.money-tray {
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+}
+.purse {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  background: var(--accent-soft);
+  border: 3px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+  min-height: 120px;
+}
+.zone-label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--ink-soft);
+  font-size: 1rem;
+  margin: 0 0 0.3rem;
+  text-align: left;
+}
+.hint {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  margin: 1rem;
+}
+
+/* ---------- clock master ---------- */
+.clock-area {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.2rem;
+}
+
+.clock-svg { width: min(340px, 80vw); height: auto; }
+
+.clock-svg.settable [data-hand] { cursor: grab; }
+.clock-svg.settable [data-hand]:active { cursor: grabbing; }
+.clock-svg.settable { touch-action: none; }   /* stops page scroll while dragging */
+
+.clock-num {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  fill: var(--ink);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(160px, 220px));
+  gap: 0.8rem;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+@media (max-width: 480px) {
+  .options-grid { grid-template-columns: 1fr; }
+}
+
+.cm-option { 
+  min-height: 56px; 
+  font-size: 1.1rem; 
+  margin-bottom: 1rem;
+}
+
+.cm-option.cm-right {
+  background: var(--good) !important;
+  color: #fff;
+  box-shadow: 0 4px 0 rgba(58, 46, 79, 0.25);
+}
+
+.cm-option.cm-wrong {
+  background: var(--bad-soft) !important;
+  color: var(--bad);
+  opacity: 0.7;
+}

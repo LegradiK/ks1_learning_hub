@@ -1,4 +1,4 @@
-"""Coin Counter routes.
+"""Money Counter routes.
 
 One page route renders the game shell; the JSON API deals a fresh
 question at the requested mode and difficulty. All generation lives
@@ -7,15 +7,15 @@ in game_logic.py (pure Python, no Flask imports).
 
 from flask import render_template, request, jsonify
 
-from app.coin_counter import bp
-from app.coin_counter.game_logic import (
+from app.money_counter import bp
+from app.money_counter.game_logic import (
     generate_question, MODES, DIFFICULTY, DEFAULT_MODE, DEFAULT_DIFFICULTY,
 )
 
 
 @bp.route("/")
 def game():
-    return render_template("coin_counter/game.html")
+    return render_template("money_counter/game.html")
 
 
 @bp.route("/api/question")
