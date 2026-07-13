@@ -48,8 +48,8 @@
   --pairs: #E0555F;         /* playing-card coral */
   --pairs-soft: #FBE5E6;
 
-  --sound: #14919B;         /* listening teal   */
-  --sound-soft: #DFF4F6;
+  --sound: #C35817;         /* listening teal   */
+  --sound-soft: #F2BA96;
 }
 
 .theme-letters { --accent: var(--letters); --accent-soft: var(--letters-soft); }

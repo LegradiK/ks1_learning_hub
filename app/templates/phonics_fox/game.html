@@ -32,6 +32,15 @@
       <button class="jelly-btn option-btn" id="mode-choose" onclick="setMode('choose')">👀 Pick the word</button>
       <button class="jelly-btn option-btn" id="mode-spell"  onclick="setMode('spell')">✏️ Spell it</button>
     </div>
+    <label class="voice-label">Voice: </label>
+    <div class="voice-btns">
+      <button class="speech-voice-btn" data-voice="man" onclick="switchVoices(event, 'man')">
+          <img src="{{ url_for('static', filename='man.png') }}" style="width:1em;height:1em;vertical-align:middle;"> Man
+      </button>
+      <button class="speech-voice-btn active" data-voice="woman" onclick="switchVoices(event, 'woman')">
+          <img src="{{ url_for('static', filename='woman.png') }}" style="width:1em;height:1em;vertical-align:middle;"> Woman
+      </button>
+    </div>
   </div>
 </div>
 
@@ -82,6 +91,8 @@ let mode = 'insert';
 let year = 'reception';
 let q = null;
 let answered = false;   // option modes: only the first tap counts
+let firstLoad = true;   // don't auto-speak before the first user gesture
+                        // (browsers block audio until the page is clicked)
 
 function recordResult(correct) {
   if (correct) { tally.right++; tally.streak++; }
@@ -165,7 +176,11 @@ async function newQuestion() {
     document.getElementById('ss-input').focus();
   }
 
-  sayWord();   // hear it straight away
+  // hear it straight away — except on the very first load, where the
+  // browser hasn't been clicked yet and would block the audio anyway;
+  // the big 🔊 button covers that first listen
+  if (firstLoad) { firstLoad = false; }
+  else { sayWord(); }
 }
 
 function pickOption(btn, value, correct) {
@@ -178,7 +193,7 @@ function pickOption(btn, value, correct) {
       document.getElementById('ss-grapheme').textContent = q.grapheme;
     }
     showMsg(`🎉 Yes! ${q.word} — the sound is "${q.grapheme}"!`, 'great');
-    launchEmojis(['⭐', '🎊', '✨', '👂']);
+    launchEmojis(['⭐', '🎊', '✨', '🦊']);
     document.querySelectorAll('.ss-option').forEach(b => b.disabled = true);
     speak(q.word);
     setTimeout(newQuestion, 2000);
@@ -201,7 +216,7 @@ function checkSpell() {
 
   if (correct) {
     showMsg(`🎉 Perfect! ${q.word} has the "${q.grapheme}" sound!`, 'great');
-    launchEmojis(['⭐', '🎊', '✨', '💫']);
+    launchEmojis(['⭐', '🎊', '✨', '🦊']);
     setTimeout(newQuestion, 2200);
   } else {
     showMsg('Good try — check the letters in red!', 'keep-going');
@@ -225,28 +240,83 @@ function renderComparison(input, answer) {
   }
 }
 
-/* ===== speech: Puter if signed in, browser voice otherwise ===== */
-function sayWord() { if (q) speak(q.word); }
+/* ===== speech: Puter if it works, browser voice otherwise ===== */
 
-function speak(text) {
-  if (window.puter && puter.ai && typeof puter.ai.txt2speech === 'function'
-      && puter.auth && puter.auth.isSignedIn && puter.auth.isSignedIn()) {
-    puter.ai.txt2speech(text, { voice: 'Amy', engine: 'neural', language: 'en-GB' })
-      .then(a => a.play())
-      .catch(() => browserSpeak(text));
-  } else {
-    browserSpeak(text);
-  }
+let activeVoice = 'Amy';
+let puterReady = false;   // becomes true after a successful (temp) sign-in
+
+function switchVoices(event, gender) {
+    document.querySelectorAll('.speech-voice-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.closest('.speech-voice-btn').classList.add('active');
+    activeVoice = gender === 'man' ? 'Brian' : 'Amy';
 }
 
-function browserSpeak(text) {
-  if (!window.speechSynthesis) return;
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'en-GB';
-  u.rate = 0.8;
-  u.pitch = 1.1;
-  speechSynthesis.speak(u);
+async function initPuter() {
+    if (puterReady) return true;
+    if (!(window.puter && puter.ai && typeof puter.ai.txt2speech === 'function')) return false;
+    try {
+        if (!puter.auth.isSignedIn()) {
+            await Promise.race([
+                puter.auth.signIn({ attempt_temp_user_creation: true }),
+                new Promise((_, rej) => setTimeout(() => rej(new Error('sign-in timeout')), 5000))
+            ]);
+        }
+        puterReady = true;
+    } catch (err) {
+        console.warn('Puter sign-in failed, using browser voice:', err);
+    }
+    return puterReady;
+}
+
+function sayWord() { if (q) speak(q.word); }
+
+async function speak(text, onEnd) {
+    const usePuter = await initPuter();   // one-time on first click, instant afterwards
+
+    if (usePuter) {
+        puter.ai.txt2speech(text, { voice: activeVoice, engine: 'neural', language: 'en-GB' })
+            .then((audio) => {
+                if (onEnd) audio.onended = onEnd;
+                console.log("Voice: Puter (" + activeVoice + ")");
+                return audio.play();
+            })
+            .catch((err) => {
+                console.error("Puter TTS failed, falling back to browser voice:", err);
+                browserSpeak(text, onEnd);
+            });
+    } else {
+        browserSpeak(text, onEnd);
+        console.log("Voice: Browser built-in voice");
+    }
+}
+
+function browserSpeak(text, onEnd) {
+    if (!window.speechSynthesis) { if (onEnd) onEnd(); return; }
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.85;
+    u.pitch = 1.1;
+    u.lang = 'en-GB';
+
+    // Best-effort match to the chosen gender in the fallback voice too
+    const voices = window.speechSynthesis.getVoices();
+    const wantMale = activeVoice === 'Brian';
+    const match =
+        voices.find(v => v.lang === 'en-GB' && (wantMale ? /male|daniel|george|ryan/i : /female|hazel|libby|sonia|susan/i).test(v.name)) ||
+        voices.find(v => v.lang === 'en-GB');
+    if (match) u.voice = match;
+
+    if (onEnd) {
+        u.onend = onEnd;
+        u.onerror = onEnd;   // don't leave the game stuck if speech errors
+    }
+    window.speechSynthesis.speak(u);
+}
+
+function showMsg(msg, type) {
+  const el = document.getElementById('ss-feedback');
+  el.textContent = msg;
+  el.className = 'feedback show ' + type;
 }
 
 function launchEmojis(emojis) {
