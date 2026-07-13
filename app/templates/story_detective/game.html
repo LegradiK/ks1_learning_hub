@@ -5,9 +5,9 @@
 
 {% block content %}
 <header class="game-header">
-  <span id="storyEmoji" class="subject-badge" aria-hidden="true">🔍</span>
+  <span class="subject-badge" aria-hidden="true">🔍</span>
   <div>
-    <h1 id="storyTitle">Story Detective</h1>
+    <h1>Story Detective</h1>
     <p class="game-sub">Some words have gone missing — can you crack the case?</p>
   </div>
   <div class="score-bar">
@@ -16,21 +16,18 @@
       <div class="sc-lbl">🔁 Attempts</div>
     </div>
     <div class="sc">
-      <!-- was a duplicate id="progressText"; renamed so both counters update -->
       <div class="sc-val" id="scoreProgress">0 / 0</div>
       <div class="sc-lbl">📖 Progress</div>
     </div>
   </div>
 </header>
 
-<div class="mode-toggle">
-  <button class="mode-btn" id="btn-year1">🔍 Year 1</button>
-  <button class="mode-btn" id="btn-year2">🕵️ Year 2</button>
-</div>
-
 <div class="toolbar">
+  <div class="mode-toggle">
+    <button class="mode-btn" id="btn-year1">🔍 Year 1</button>
+    <button class="mode-btn" id="btn-year2">🕵️ Year 2</button>
+  </div>
   <label>Story
-    <!-- populated by JS so the list filters to the selected year -->
     <select id="storySelect"></select>
   </label>
   <button id="newStoryBtn" class="primary">New Story</button>
@@ -43,7 +40,11 @@
   <span id="progressText">0 / 0</span>
 </div>
 
-<div id="storyArea" class="story-area">Loading story…</div>
+<div class="toolbar">
+  <label>Title :</label>
+  <h2 id="currentStory" class="current-story"></h2>
+  <div id="storyArea" class="story-area">Loading story…</div>
+</div>
 
 <div id="year1Panel" class="panel hidden">
   <h2>Choose the correct word</h2>
@@ -65,7 +66,6 @@
 <div id="completedCard" class="completed hidden">
   <div class="trophy">🏆</div>
   <h2>Case closed, Detective!</h2>
-  <!-- this element was missing entirely, which crashed loadStory() -->
   <div id="starsEarned" class="stars">☆☆☆</div>
   <p>Excellent detective work.</p>
   <div id="completedStory" class="completed-story"></div>
@@ -76,13 +76,13 @@
 <script>
 "use strict";
 
-/* Built from url_for so the API works under any blueprint url_prefix —
-   hardcoded "/api/..." was 404ing once the blueprint had a prefix. */
+/* Built from url_for so the API works under any blueprint url_prefix. */
 const BASE = "{{ url_for('story_detective.game') }}";
 const ALL_STORIES = {{ quizzes | tojson }};
 
 const storySelect    = document.getElementById("storySelect");
 const storyArea      = document.getElementById("storyArea");
+const currentStory   = document.getElementById("currentStory");
 const wordBank       = document.getElementById("wordBank");
 const optionButtons  = document.getElementById("optionButtons");
 const year1Panel     = document.getElementById("year1Panel");
@@ -95,8 +95,6 @@ const completedCard  = document.getElementById("completedCard");
 const completedStory = document.getElementById("completedStory");
 const starsEarned    = document.getElementById("starsEarned");
 const attemptCount   = document.getElementById("attemptCount");
-const storyTitle     = document.getElementById("storyTitle");
-const storyEmoji     = document.getElementById("storyEmoji");
 const checkButton    = document.getElementById("checkButton");
 const actionButtons  = document.getElementById("actionButtons");
 
@@ -132,7 +130,7 @@ function setMode(mode) {
   currentMode = mode;
   document.getElementById("btn-year1").classList.toggle("active", mode === "year1");
   document.getElementById("btn-year2").classList.toggle("active", mode === "year2");
-  fillSelect();                     // the toggle now filters stories by level
+  fillSelect();
   loadStory();
 }
 
@@ -149,13 +147,13 @@ async function loadStory() {
   try {
     r = await fetch(BASE + "api/story/" + id);
   } catch (e) {
-    return message("Couldn't reach the server — try again.", "#ffdede");
+    return message("Couldn't reach the server — try again.", "#FDE9E9");
   }
-  if (!r.ok) return message("Couldn't load that story.", "#ffdede");
+  if (!r.ok) return message("Couldn't load that story.", "#FDE9E9");
   story = await r.json();
 
-  storyTitle.textContent = story.title;
-  storyEmoji.textContent = story.emoji;
+  /* the page title stays "Story Detective"; only this line changes */
+  currentStory.textContent = story.emoji + " " + story.title;
 
   answers = new Array(gapCount()).fill(null);
   locked  = new Array(gapCount()).fill(false);
@@ -253,8 +251,7 @@ function showGap(i) {
   highlightGap(i);
 }
 
-/* Y1 stars come from wrong guesses, not total guesses — sending the raw
-   guess count meant a perfect run still got 1 star. */
+/* Y1 stars come from wrong guesses, not total guesses. */
 const year1Attempt = () => wrongTries === 0 ? 1 : (wrongTries <= 2 ? 2 : 3);
 
 async function checkYear1() {
@@ -274,7 +271,7 @@ async function checkYear1() {
     answers[currentGap] = null;            // wrong word no longer sticks in the gap
     renderStory();
     highlightGap(currentGap);
-    message("Not that one, Detective — read the sentence again! 👀", "#ffdede");
+    message("Not that one, Detective — read the sentence again! 👀", "#FDE9E9");
   }
 }
 
@@ -301,7 +298,7 @@ function renderBank() {
 
 checkButton.onclick = async () => {
   if (answers.some((a, i) => a === null && !locked[i])) {
-    return message("Fill every gap first, Detective! 🔍", "#ffe6a7");
+    return message("Fill every gap first, Detective! 🔍", "#FFF1DB");
   }
   attempts++;
   attemptCount.textContent = attempts;
@@ -323,7 +320,7 @@ checkButton.onclick = async () => {
     wrong === 1
       ? "So close! One word hopped back — read that bit again. 👀"
       : "Good try! " + wrong + " words hopped back — read those bits again. 👀",
-    "#ffe6a7"
+    "#FFF1DB"
   );
 };
 
@@ -339,7 +336,7 @@ async function postCheck(sheet, attemptValue) {
     if (!res.ok) throw new Error();
     return await res.json();
   } catch (e) {
-    message("The case files didn't load — try that again.", "#ffdede");
+    message("The case files didn't load — try that again.", "#FDE9E9");
     return null;
   }
 }
@@ -374,7 +371,6 @@ function message(text, color) {
 
 document.getElementById("newStoryBtn").onclick = loadStory;
 document.getElementById("resetButton").onclick = loadStory;
-storySelect.onchange = loadStory;
 
 setMode("{{ initial_mode | default('year1') }}");
 </script>

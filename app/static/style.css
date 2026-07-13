@@ -304,9 +304,16 @@ h2 { font-size: clamp(1.3rem, 3vw, 1.7rem); }
   transition: transform 0.08s ease;
 }
 
+/* hover on an unselected button — soft accent tint */
+.mode-btn:not(.active):hover {
+  background: var(--accent-soft);
+}
+
 .mode-btn:active { transform: translateY(3px); box-shadow: none; }
 
-.mode-btn.active {
+/* selected — same colour treatment as button.primary / New Story */
+.mode-btn.active,
+.mode-btn.active:hover {
   background: var(--accent);
   color: #fff;
   box-shadow: 0 4px 0 rgba(58, 46, 79, 0.25);
@@ -1561,4 +1568,312 @@ table#sd-grid td {
   background: var(--bad-soft) !important;
   color: var(--bad);
   opacity: 0.7;
+}
+
+/* ============================================================
+   MODE BUTTON STATES (global — used by Letter Quest and
+   Story Detective). Selected = same accent as button.primary.
+   Note: .theme-detective must never restyle .mode-btn, or a
+   later two-class rule ties on specificity and wins by order.
+   ============================================================ */
+
+/* hover on an UNSELECTED button — soft accent tint */
+.mode-btn:not(.active):hover {
+  background: var(--accent-soft);
+}
+
+.mode-btn:active { transform: translateY(3px); box-shadow: none; }
+
+/* selected — stays accent-coloured, even under the cursor */
+.mode-btn.active,
+.mode-btn.active:hover {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 0 rgba(58, 46, 79, 0.25);
+}
+
+/* ============================================================
+   STORY DETECTIVE — game-specific bits only.
+   Header, score bar, mode buttons, progress bar, focus rings and
+   reduced motion all come from the shared rules above.
+   .theme-detective already swaps --accent to detective navy.
+   ============================================================ */
+
+/* toolbar: year toggle + story picker + New Story on one line */
+.theme-detective .toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.theme-detective .toolbar .mode-toggle {
+  margin-bottom: 0;               /* cancel the global stacked margin */
+}
+
+.theme-detective .toolbar label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.theme-detective .toolbar select {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--panel);
+  border: 3px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.9rem;
+  min-height: 52px;
+  cursor: pointer;
+}
+
+.theme-detective .toolbar select:focus { border-color: var(--accent); outline: none; }
+
+/* toolbar buttons — jelly recipe; .primary matches the mode-btn accent */
+.theme-detective .toolbar > button,
+.theme-detective .buttons button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--panel);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 1.2rem;
+  min-height: 52px;
+  cursor: pointer;
+  box-shadow: 0 5px 0 var(--line);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.theme-detective button.primary {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 5px 0 rgba(58, 46, 79, 0.25);
+}
+
+.theme-detective .toolbar > button:active,
+.theme-detective .buttons button:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 rgba(58, 46, 79, 0.25);
+}
+
+.theme-detective button:disabled {
+  color: var(--ink-soft);
+  opacity: 0.55;
+  cursor: default;
+  transform: none;
+}
+
+/* progress row (the bar + fill are styled globally) */
+.theme-detective .progress {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1.2rem;
+}
+
+.theme-detective .progress > span {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--ink-soft);
+  min-width: 60px;
+  text-align: right;
+}
+
+/* the current case name — changes per story; the h1 never does */
+.theme-detective .current-story {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  color: var(--ink);
+  margin: 1rem 0.6rem;
+}
+
+/* story area — same look as .game-panel */
+.theme-detective .story-area {
+  background: var(--panel);
+  border: 3px solid var(--accent-soft);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+  font-size: 1.3rem;
+  line-height: 2.3;
+}
+
+/* the gaps */
+.theme-detective .story-gap {
+  display: inline-block;
+  min-width: 4em;
+  text-align: center;
+  padding: 0 0.7rem;
+  line-height: 1.9;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  border: 3px dashed var(--accent);
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.theme-detective .story-gap.active {
+  border-style: solid;
+  transform: scale(1.07);
+  animation: detective-glow 1.4s ease-in-out infinite;
+}
+
+.theme-detective .story-gap.correct {
+  background: var(--good-soft);
+  border: 3px solid var(--good);
+  color: var(--good);
+  cursor: default;
+  animation: pop 0.25s ease;              /* shared keyframe */
+}
+
+.theme-detective .story-gap.correct::after {
+  content: " \2713";
+  font-weight: 800;
+}
+
+.theme-detective .story-gap.wrong {
+  background: var(--bad-soft);
+  border-color: var(--bad);
+  animation: detective-shake 0.4s ease;
+}
+
+@keyframes detective-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(44, 58, 94, 0.45); }
+  50%      { box-shadow: 0 0 0 7px rgba(44, 58, 94, 0); }
+}
+
+@keyframes detective-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+/* option buttons + word bank — same recipe as .diff-btn */
+.theme-detective .panel { margin-top: 1.2rem; }
+
+.theme-detective .panel h2 {
+  font-size: 1.15rem;
+  color: var(--ink-soft);
+  text-align: center;
+  margin: 0 0 0.8rem;
+}
+
+.theme-detective .options,
+.theme-detective .word-bank {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.theme-detective .option,
+.theme-detective .word {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--panel);
+  border: 3px solid var(--line);
+  border-radius: 999px;
+  padding: 0.4rem 1.3rem;
+  min-height: 52px;
+  cursor: pointer;
+  user-select: none;
+  box-shadow: 0 4px 0 var(--line);
+  transition: transform 0.08s ease;
+}
+
+.theme-detective .option:hover,
+.theme-detective .word:hover { border-color: var(--accent); }
+
+.theme-detective .option:active,
+.theme-detective .word:active { transform: translateY(3px); box-shadow: none; }
+
+/* action button row */
+.theme-detective .buttons {
+  display: flex;
+  justify-content: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+/* message box — same shape as .flash */
+.theme-detective .message {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  text-align: center;
+  margin-top: 1rem;
+  padding: 0.8rem 1.2rem;
+  border-radius: var(--radius-sm);
+  border: 3px solid var(--line);
+  /* background set inline by message(text, color) in the JS */
+}
+
+/* completed card — same look as .win-banner */
+.theme-detective .completed {
+  margin-top: 1.5rem;
+  text-align: center;
+  background: var(--good-soft);
+  border: 3px solid var(--good);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  animation: pop 0.25s ease;
+}
+
+.theme-detective .trophy { font-size: 2.6rem; }
+
+.theme-detective .completed h2 { color: var(--good); margin: 0.4rem 0; }
+
+.theme-detective .completed .stars {
+  font-size: 1.8rem;
+  letter-spacing: 6px;
+  color: var(--money);            /* gold stars, borrowed from Coin Counter */
+  margin: 0.3rem 0 0.5rem;
+}
+
+.theme-detective .completed p {
+  color: var(--ink-soft);
+  margin: 0 0 1rem;
+}
+
+.theme-detective .completed-story {
+  background: var(--panel);
+  border: 3px solid var(--accent-soft);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.2rem;
+  font-size: 1.1rem;
+  line-height: 1.9;
+  text-align: left;
+}
+
+/* utility + responsive */
+.theme-detective .hidden { display: none !important; }
+
+@media (max-width: 540px) {
+  .theme-detective .story-area {
+    font-size: 1.12rem;
+    padding: 1rem;
+  }
 }
