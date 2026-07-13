@@ -49,7 +49,10 @@
   --pairs-soft: #FBE5E6;
 
   --sound: #C35817;         /* listening teal   */
-  --sound-soft: #F2BA96;
+  --sound-soft: #f8e8de;
+
+  --detective: #2C3A5E;         /* listening teal   */
+  --detective-soft: #e5ebf8;
 }
 
 .theme-letters { --accent: var(--letters); --accent-soft: var(--letters-soft); }
@@ -61,6 +64,7 @@
 .theme-clock { --accent: var(--clock); --accent-soft: var(--clock-soft); }
 .theme-pairs { --accent: var(--pairs); --accent-soft: var(--pairs-soft); }
 .theme-sound { --accent: var(--sound); --accent-soft: var(--sound-soft); }
+.theme-detective { --accent: var(--detective); --accent-soft: var(--detective-soft); }
 
 /* ---------- base ---------- */
 * { box-sizing: border-box; }

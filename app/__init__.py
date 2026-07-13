@@ -18,6 +18,7 @@ def create_app():
     from app.clock_master import bp as clock_master_bp
     from app.match_pairs import bp as match_pairs_bp
     from app.phonics_fox import bp as phonics_fox_bp
+    from app.story_detective import bp as story_detective_bp
 
     app.register_blueprint(hub_bp)                                    # "/"
     app.register_blueprint(letter_quest_bp, url_prefix="/letter-quest")
@@ -28,5 +29,6 @@ def create_app():
     app.register_blueprint(clock_master_bp, url_prefix="/clock-master")
     app.register_blueprint(match_pairs_bp, url_prefix="/match-pairs")
     app.register_blueprint(phonics_fox_bp, url_prefix="/phonics-fox")
+    app.register_blueprint(story_detective_bp, url_prefix="/story-detective")
 
     return app
