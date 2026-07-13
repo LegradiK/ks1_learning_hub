@@ -30,6 +30,7 @@
           <a class="dropdown-item" href="{{ url_for('clock_master.game') }}">⏰ Clock Master</a>
           <a class="dropdown-item" href="{{ url_for('match_pairs.game') }}">🃏 Match Pairs</a>
           <a class="dropdown-item" href="{{ url_for('phonics_fox.game') }}">🦊 Phonics Fox</a>
+          <a class="dropdown-item" href="{{ url_for('story_detective.game') }}">🔍  Story Detective</a>
         </div>
       </details>
 
@@ -44,6 +45,7 @@
           <button class="dropdown-item" onclick="openHowto('clock-master')">⏰ Clock Master</button>
           <button class="dropdown-item" onclick="openHowto('match-pairs')">🃏 Match Pairs</button>
           <button class="dropdown-item" onclick="openHowto('phonics-fox')">🦊 Phonics Fox</button>
+          <button class="dropdown-item" onclick="openHowto('story-detective')">🔍 Story Detective</button>
         </div>
       </details>
     </div>
@@ -297,6 +299,23 @@
           <li>Pick a <strong>Man or Woman voice</strong>, build your 🔥 streak, and press 🔁 for a new word anytime</li>
         </ul>
       </div>
+
+        <div class="howto-page" id="howto-story-detective" style="display:none">
+        <h2>🔍 Story Detective</h2>
+        <p>Some words have gone missing — can you crack the case?</p>
+
+        <h3>🔍How to Play</h3>
+        <p>Sneaky gaps have appeared in this story, and only you can fix it.</p>
+        <ul>
+          <li>📖Read the whole story first — a good detective gathers all the clues before deciding.</li>
+          <li>🖱️Drag a word from the clue bank into a gap, or tap the word to drop it into the next empty gap.</li>
+          <li>Changed your mind? Tap a filled gap to take the word back.</li>
+          <li>✋Watch out — some words look right but don't match the story!</li>
+          <li>When every gap is full, press Check✅ my story to see if you've cracked the case.</li>
+        </ul>
+      </div>
+
+      
 
     </div>
   </div>

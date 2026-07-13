@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+
+{% block title %}Story Detective{% endblock %}
+{% block theme %}theme-detective{% endblock %}
+
+{% block content %}
+<header class="game-header">
+  <span id="storyEmoji" class="subject-badge" aria-hidden="true">🔍</span>
+  <div>
+    <h1 id="storyTitle">Story Detective</h1>
+    <p class="game-sub">Some words have gone missing — can you crack the case?</p>
+  </div>
+  <div class="score-bar">
+    <div class="sc">
+      <div class="sc-val" id="attemptCount">0</div>
+      <div class="sc-lbl">🔁 Attempts</div>
+    </div>
+    <div class="sc">
+      <!-- was a duplicate id="progressText"; renamed so both counters update -->
+      <div class="sc-val" id="scoreProgress">0 / 0</div>
+      <div class="sc-lbl">📖 Progress</div>
+    </div>
+  </div>
+</header>
+
+<div class="mode-toggle">
+  <button class="mode-btn" id="btn-year1">🔍 Year 1</button>
+  <button class="mode-btn" id="btn-year2">🕵️ Year 2</button>
+</div>
+
+<div class="toolbar">
+  <label>Story
+    <!-- populated by JS so the list filters to the selected year -->
+    <select id="storySelect"></select>
+  </label>
+  <button id="newStoryBtn" class="primary">New Story</button>
+</div>
+
+<div class="progress">
+  <div class="progress-bar">
+    <div id="progressFill" class="progress-fill"></div>
+  </div>
+  <span id="progressText">0 / 0</span>
+</div>
+
+<div id="storyArea" class="story-area">Loading story…</div>
+
+<div id="year1Panel" class="panel hidden">
+  <h2>Choose the correct word</h2>
+  <div id="optionButtons" class="options"></div>
+</div>
+
+<div id="year2Panel" class="panel hidden">
+  <h2>Word Bank</h2>
+  <div id="wordBank" class="word-bank"></div>
+</div>
+
+<div class="buttons" id="actionButtons">
+  <button id="checkButton" class="primary">Check Answers</button>
+  <button id="resetButton">Try Again</button>
+</div>
+
+<div id="messageBox" class="message hidden"></div>
+
+<div id="completedCard" class="completed hidden">
+  <div class="trophy">🏆</div>
+  <h2>Case closed, Detective!</h2>
+  <!-- this element was missing entirely, which crashed loadStory() -->
+  <div id="starsEarned" class="stars">☆☆☆</div>
+  <p>Excellent detective work.</p>
+  <div id="completedStory" class="completed-story"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+"use strict";
+
+/* Built from url_for so the API works under any blueprint url_prefix —
+   hardcoded "/api/..." was 404ing once the blueprint had a prefix. */
+const BASE = "{{ url_for('story_detective.game') }}";
+const ALL_STORIES = {{ quizzes | tojson }};
+
+const storySelect    = document.getElementById("storySelect");
+const storyArea      = document.getElementById("storyArea");
+const wordBank       = document.getElementById("wordBank");
+const optionButtons  = document.getElementById("optionButtons");
+const year1Panel     = document.getElementById("year1Panel");
+const year2Panel     = document.getElementById("year2Panel");
+const progressFill   = document.getElementById("progressFill");
+const progressText   = document.getElementById("progressText");
+const scoreProgress  = document.getElementById("scoreProgress");
+const messageBox     = document.getElementById("messageBox");
+const completedCard  = document.getElementById("completedCard");
+const completedStory = document.getElementById("completedStory");
+const starsEarned    = document.getElementById("starsEarned");
+const attemptCount   = document.getElementById("attemptCount");
+const storyTitle     = document.getElementById("storyTitle");
+const storyEmoji     = document.getElementById("storyEmoji");
+const checkButton    = document.getElementById("checkButton");
+const actionButtons  = document.getElementById("actionButtons");
+
+let currentMode = "year1";
+let story = null;
+let answers = [];      // one slot per gap, null until chosen
+let locked = [];       // gaps confirmed correct
+let attempts = 0;      // Year 2: Check Answers presses
+let wrongTries = 0;    // Year 1: wrong guesses
+let currentGap = 0;
+
+const gapCount = () => story ? story.segments.filter(s => s.gap).length : 0;
+const solvedCount = () => locked.filter(Boolean).length;
+
+/* ------------------------------------------------------------ mode + menu */
+
+function storiesForMode() {
+  const level = currentMode === "year1" ? 1 : 2;
+  return ALL_STORIES.filter(s => s.level === level);
+}
+
+function fillSelect() {
+  storySelect.innerHTML = "";
+  storiesForMode().forEach(s => {
+    const opt = document.createElement("option");
+    opt.value = s.id;
+    opt.textContent = s.emoji + " " + s.title;
+    storySelect.appendChild(opt);
+  });
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById("btn-year1").classList.toggle("active", mode === "year1");
+  document.getElementById("btn-year2").classList.toggle("active", mode === "year2");
+  fillSelect();                     // the toggle now filters stories by level
+  loadStory();
+}
+
+document.getElementById("btn-year1").onclick = () => setMode("year1");
+document.getElementById("btn-year2").onclick = () => setMode("year2");
+
+/* ------------------------------------------------------------ load + render */
+
+async function loadStory() {
+  const id = storySelect.value;
+  if (!id) { storyArea.textContent = "No stories for this level yet."; return; }
+
+  let r;
+  try {
+    r = await fetch(BASE + "api/story/" + id);
+  } catch (e) {
+    return message("Couldn't reach the server — try again.", "#ffdede");
+  }
+  if (!r.ok) return message("Couldn't load that story.", "#ffdede");
+  story = await r.json();
+
+  storyTitle.textContent = story.title;
+  storyEmoji.textContent = story.emoji;
+
+  answers = new Array(gapCount()).fill(null);
+  locked  = new Array(gapCount()).fill(false);
+  attempts = 0;
+  wrongTries = 0;
+  currentGap = 0;
+  attemptCount.textContent = "0";
+  starsEarned.textContent = "☆☆☆";
+
+  completedCard.classList.add("hidden");
+  messageBox.classList.add("hidden");
+  actionButtons.classList.remove("hidden");
+  storyArea.classList.remove("hidden");
+
+  if (currentMode === "year1") {
+    year1Panel.classList.remove("hidden");
+    year2Panel.classList.add("hidden");
+    checkButton.classList.add("hidden");   // Y1 checks automatically per gap
+  } else {
+    year2Panel.classList.remove("hidden");
+    year1Panel.classList.add("hidden");
+    checkButton.classList.remove("hidden");
+  }
+
+  renderStory();
+  if (currentMode === "year1") showGap(0);
+  else renderBank();
+  updateProgress();
+}
+
+function renderStory() {
+  storyArea.innerHTML = "";
+  let gapIndex = 0;
+  story.segments.forEach(seg => {
+    if (seg.text !== undefined) {
+      storyArea.append(document.createTextNode(seg.text));
+      return;
+    }
+    const i = gapIndex++;
+    const span = document.createElement("span");
+    span.className = "story-gap";
+    span.dataset.index = i;
+    span.textContent = answers[i] || "_____";
+    if (locked[i]) span.classList.add("correct");
+    else if (currentMode === "year2") {
+      span.onclick = () => {
+        if (answers[i] !== null) {          // tap a filled gap to empty it
+          answers[i] = null;
+          renderStory();
+        }
+        selectGap(i);
+      };
+    }
+    storyArea.appendChild(span);
+  });
+  highlightGap(currentGap);
+}
+
+function highlightGap(i) {
+  document.querySelectorAll(".story-gap").forEach(x => x.classList.remove("active"));
+  const g = document.querySelector(`.story-gap[data-index='${i}']`);
+  if (g && !locked[i]) g.classList.add("active");
+}
+
+function selectGap(i) {
+  if (locked[i]) return;
+  currentGap = i;
+  highlightGap(i);
+}
+
+function nextEmptyGap() {
+  for (let i = 0; i < answers.length; i++) {
+    if (answers[i] === null && !locked[i]) return i;
+  }
+  return null;
+}
+
+/* ------------------------------------------------------------ Year 1 */
+
+function showGap(i) {
+  currentGap = i;
+  const options = story.segments.filter(x => x.gap)[i].gap.options;
+  optionButtons.innerHTML = "";
+  options.forEach(word => {
+    const b = document.createElement("button");
+    b.className = "option";
+    b.textContent = word;
+    b.onclick = () => {
+      answers[currentGap] = word;
+      renderStory();
+      checkYear1();
+    };
+    optionButtons.appendChild(b);
+  });
+  highlightGap(i);
+}
+
+/* Y1 stars come from wrong guesses, not total guesses — sending the raw
+   guess count meant a perfect run still got 1 star. */
+const year1Attempt = () => wrongTries === 0 ? 1 : (wrongTries <= 2 ? 2 : 3);
+
+async function checkYear1() {
+  const result = await postCheck(answers, year1Attempt());
+  if (!result) return;
+
+  if (result.results[currentGap] === true) {
+    locked[currentGap] = true;
+    updateProgress();
+    if (result.solved) return finish(result);
+    const next = nextEmptyGap();
+    renderStory();
+    if (next !== null) showGap(next);
+  } else {
+    wrongTries++;
+    attemptCount.textContent = wrongTries;
+    answers[currentGap] = null;            // wrong word no longer sticks in the gap
+    renderStory();
+    highlightGap(currentGap);
+    message("Not that one, Detective — read the sentence again! 👀", "#ffdede");
+  }
+}
+
+/* ------------------------------------------------------------ Year 2 */
+
+function renderBank() {
+  wordBank.innerHTML = "";
+  story.bank.forEach(word => {
+    const d = document.createElement("div");
+    d.className = "word";
+    d.textContent = word;
+    d.onclick = () => {
+      if (locked[currentGap] || currentGap === null) return;
+      answers[currentGap] = word;
+      const next = nextEmptyGap();          // auto-advance to the next empty gap
+      if (next !== null) currentGap = next;
+      renderStory();
+      updateProgress();
+    };
+    wordBank.appendChild(d);
+  });
+  highlightGap(0);
+}
+
+checkButton.onclick = async () => {
+  if (answers.some((a, i) => a === null && !locked[i])) {
+    return message("Fill every gap first, Detective! 🔍", "#ffe6a7");
+  }
+  attempts++;
+  attemptCount.textContent = attempts;
+
+  const result = await postCheck(answers, attempts);
+  if (!result) return;
+  if (result.solved) return finish(result);
+
+  let wrong = 0;
+  result.results.forEach((ok, i) => {
+    if (ok === true) locked[i] = true;
+    else if (ok === false) { answers[i] = null; wrong++; }
+  });
+  const next = nextEmptyGap();
+  if (next !== null) currentGap = next;
+  renderStory();
+  updateProgress();
+  message(
+    wrong === 1
+      ? "So close! One word hopped back — read that bit again. 👀"
+      : "Good try! " + wrong + " words hopped back — read those bits again. 👀",
+    "#ffe6a7"
+  );
+};
+
+/* ------------------------------------------------------------ shared */
+
+async function postCheck(sheet, attemptValue) {
+  try {
+    const res = await fetch(BASE + "api/check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ story_id: story.id, answers: sheet, attempts: attemptValue })
+    });
+    if (!res.ok) throw new Error();
+    return await res.json();
+  } catch (e) {
+    message("The case files didn't load — try that again.", "#ffdede");
+    return null;
+  }
+}
+
+function finish(result) {
+  locked = locked.map(() => true);
+  starsEarned.textContent = "★".repeat(result.stars) + "☆".repeat(3 - result.stars);
+  completedStory.textContent = result.full_text;
+  completedCard.classList.remove("hidden");
+  year1Panel.classList.add("hidden");
+  year2Panel.classList.add("hidden");
+  actionButtons.classList.add("hidden");
+  messageBox.classList.add("hidden");
+  progressFill.style.width = "100%";
+  progressText.textContent = "Complete";
+  scoreProgress.textContent = gapCount() + " / " + gapCount();
+}
+
+function updateProgress() {
+  const total = gapCount();
+  const done = solvedCount();
+  progressFill.style.width = (total ? (done / total) * 100 : 0) + "%";
+  progressText.textContent = done + " / " + total;
+  scoreProgress.textContent = done + " / " + total;
+}
+
+function message(text, color) {
+  messageBox.classList.remove("hidden");
+  messageBox.textContent = text;
+  messageBox.style.background = color;
+}
+
+document.getElementById("newStoryBtn").onclick = loadStory;
+document.getElementById("resetButton").onclick = loadStory;
+storySelect.onchange = loadStory;
+
+setMode("{{ initial_mode | default('year1') }}");
+</script>
+{% endblock %}
