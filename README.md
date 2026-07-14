@@ -37,7 +37,7 @@ Nine games across English, maths and logic — each with level switches (startin
 
 ---
 
-<h2>👀 <wbr>How the page looks like
+<h2>👀 <wbr>How the page looks like</h2>
 
 How the front page looks like: ![1784037526708](image/README/1784037526708.png)
 
