@@ -43,11 +43,9 @@ How the front page looks like: ![1784037526708](image/README/1784037526708.png)
 
 How Game Dropdown looks like: ![1784037544528](image/README/1784037544528.png)
 
-How How to play popup looks like: ![1784037571319](image/README/1784037571319.png)
+How to play popup looks like:  ![1784037571319](image/README/1784037571319.png)
 
-Game page example - Word Wizard: 
-
-![1784037558959](image/README/1784037558959.png)
+Game page example - Word Wizard: ![1784037558959](image/README/1784037558959.png)
 
 ## 🧠 Design principles
 
