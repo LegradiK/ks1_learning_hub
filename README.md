@@ -1,5 +1,3 @@
-
-
 # 🎈 KS1 Learning Hub
 
 **Little games for big learning** — a collection of free, curriculum-inspired learning games for children aged 4–7 (Reception to Year 2), built with Flask.
@@ -18,8 +16,9 @@ Nine games across English, maths and logic — each with level switches (startin
 
 ### 📚 English
 
-| Game                        | What children practise                                                                                                    |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+
+| Game                  | What children practise                                                                                                    |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | 🔍**Story Detective** | Reading comprehension — read a short story and work out the missing words from clues in the text                         |
 | 🧙**Word Wizard**     | Listen-and-spell — hear a word (text-to-speech), then spell it, stage by stage (Reception, Year 1 and Year 2 word banks) |
 | 🔤**Letter Quest**    | A child-sized crossword for spelling and vocabulary                                                                       |
@@ -28,14 +27,27 @@ Nine games across English, maths and logic — each with level switches (startin
 
 ### 🔢 Maths & logic
 
-| Game                     | What children practise                                           |
-| ------------------------ | ---------------------------------------------------------------- |
+
+| Game               | What children practise                                           |
+| -------------------- | ------------------------------------------------------------------ |
 | ➕**Maths Drill**  | Quick-fire sums to build number confidence                       |
 | 💰**Coin Counter** | Recognising UK coins and making amounts                          |
 | 🕐**Clock Master** | Telling the time on an analogue clock, including draggable hands |
 | 🧩**Sudoku**       | Mini picture-sudoku puzzles for logic and careful thinking       |
 
 ---
+
+<h2>👀 <wbr>How the page looks like
+
+How the front page looks like: ![1784037526708](image/README/1784037526708.png)
+
+How Game Dropdown looks like: ![1784037544528](image/README/1784037544528.png)
+
+How How to play popup looks like: ![1784037571319](image/README/1784037571319.png)
+
+Game page example - Word Wizard: 
+
+![1784037558959](image/README/1784037558959.png)
 
 ## 🧠 Design principles
 
@@ -145,11 +157,11 @@ so a right answer always proves the child read and understood the text.
 
 ## 🗺️ Roadmap - what can be implemented in the future
 
-- [ ] Drag-and-drop word placement in Story Detective (touch + mouse)
-- [ ] More stories and word banks per level
-- [ ] Automated tests for game logic and API routes
-- [ ] Sound effects and celebration animations
-- [ ] Printable activity sheets to pair with the games
+- [ ]  Drag-and-drop word placement in Story Detective (touch + mouse)
+- [ ]  More stories and word banks per level
+- [ ]  Automated tests for game logic and API routes
+- [ ]  Sound effects and celebration animations
+- [ ]  Printable activity sheets to pair with the games
 
 ---
 
