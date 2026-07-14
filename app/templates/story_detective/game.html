@@ -40,19 +40,12 @@
   <span id="progressText">0 / 0</span>
 </div>
 
-<div class="toolbar">
-  <label>Title :</label>
-  <h2 id="currentStory" class="current-story"></h2>
-  <div id="storyArea" class="story-area">Loading story…</div>
-</div>
+<h2 id="currentStory" class="current-story"></h2>
+<div id="storyArea" class="story-area">Loading story…</div>
 
-<div id="year1Panel" class="panel hidden">
-  <h2>Choose the correct word</h2>
-  <div id="optionButtons" class="options"></div>
-</div>
-
-<div id="year2Panel" class="panel hidden">
-  <h2>Word Bank</h2>
+<!-- one panel for both years; only the bank's contents differ -->
+<div id="wordPanel" class="panel">
+  <h2 id="bankTitle">Word Bank</h2>
   <div id="wordBank" class="word-bank"></div>
 </div>
 
@@ -84,9 +77,8 @@ const storySelect    = document.getElementById("storySelect");
 const storyArea      = document.getElementById("storyArea");
 const currentStory   = document.getElementById("currentStory");
 const wordBank       = document.getElementById("wordBank");
-const optionButtons  = document.getElementById("optionButtons");
-const year1Panel     = document.getElementById("year1Panel");
-const year2Panel     = document.getElementById("year2Panel");
+const wordPanel      = document.getElementById("wordPanel");
+const bankTitle      = document.getElementById("bankTitle");
 const progressFill   = document.getElementById("progressFill");
 const progressText   = document.getElementById("progressText");
 const scoreProgress  = document.getElementById("scoreProgress");
@@ -102,8 +94,7 @@ let currentMode = "year1";
 let story = null;
 let answers = [];      // one slot per gap, null until chosen
 let locked = [];       // gaps confirmed correct
-let attempts = 0;      // Year 2: Check Answers presses
-let wrongTries = 0;    // Year 1: wrong guesses
+let attempts = 0;      // Check Answers presses
 let currentGap = 0;
 
 const gapCount = () => story ? story.segments.filter(s => s.gap).length : 0;
@@ -131,7 +122,7 @@ function setMode(mode) {
   document.getElementById("btn-year1").classList.toggle("active", mode === "year1");
   document.getElementById("btn-year2").classList.toggle("active", mode === "year2");
   fillSelect();
-  loadStory();
+  loadStory();   // mode swap changes the story list, so load immediately
 }
 
 document.getElementById("btn-year1").onclick = () => setMode("year1");
@@ -158,7 +149,6 @@ async function loadStory() {
   answers = new Array(gapCount()).fill(null);
   locked  = new Array(gapCount()).fill(false);
   attempts = 0;
-  wrongTries = 0;
   currentGap = 0;
   attemptCount.textContent = "0";
   starsEarned.textContent = "☆☆☆";
@@ -167,21 +157,15 @@ async function loadStory() {
   messageBox.classList.add("hidden");
   actionButtons.classList.remove("hidden");
   storyArea.classList.remove("hidden");
+  wordPanel.classList.remove("hidden");
 
-  if (currentMode === "year1") {
-    year1Panel.classList.remove("hidden");
-    year2Panel.classList.add("hidden");
-    checkButton.classList.add("hidden");   // Y1 checks automatically per gap
-  } else {
-    year2Panel.classList.remove("hidden");
-    year1Panel.classList.add("hidden");
-    checkButton.classList.remove("hidden");
-  }
+  bankTitle.textContent = currentMode === "year1"
+    ? "Put each word into the right gap"
+    : "Word Bank";
 
   renderStory();
-  if (currentMode === "year1") showGap(0);
-  else renderBank();
-  updateProgress();
+  renderBank();
+  updateFilledProgress();
 }
 
 function renderStory() {
@@ -197,12 +181,16 @@ function renderStory() {
     span.className = "story-gap";
     span.dataset.index = i;
     span.textContent = answers[i] || "_____";
-    if (locked[i]) span.classList.add("correct");
-    else if (currentMode === "year2") {
+    if (locked[i]) {
+      span.classList.add("correct");
+    } else {
+      /* tap a gap to jump to it; tapping a filled gap empties it first */
       span.onclick = () => {
-        if (answers[i] !== null) {          // tap a filled gap to empty it
+        if (answers[i] !== null) {
           answers[i] = null;
           renderStory();
+          refreshBankUsed();
+          updateFilledProgress();
         }
         selectGap(i);
       };
@@ -231,51 +219,9 @@ function nextEmptyGap() {
   return null;
 }
 
-/* ------------------------------------------------------------ Year 1 */
-
-function showGap(i) {
-  currentGap = i;
-  const options = story.segments.filter(x => x.gap)[i].gap.options;
-  optionButtons.innerHTML = "";
-  options.forEach(word => {
-    const b = document.createElement("button");
-    b.className = "option";
-    b.textContent = word;
-    b.onclick = () => {
-      answers[currentGap] = word;
-      renderStory();
-      checkYear1();
-    };
-    optionButtons.appendChild(b);
-  });
-  highlightGap(i);
-}
-
-/* Y1 stars come from wrong guesses, not total guesses. */
-const year1Attempt = () => wrongTries === 0 ? 1 : (wrongTries <= 2 ? 2 : 3);
-
-async function checkYear1() {
-  const result = await postCheck(answers, year1Attempt());
-  if (!result) return;
-
-  if (result.results[currentGap] === true) {
-    locked[currentGap] = true;
-    updateProgress();
-    if (result.solved) return finish(result);
-    const next = nextEmptyGap();
-    renderStory();
-    if (next !== null) showGap(next);
-  } else {
-    wrongTries++;
-    attemptCount.textContent = wrongTries;
-    answers[currentGap] = null;            // wrong word no longer sticks in the gap
-    renderStory();
-    highlightGap(currentGap);
-    message("Not that one, Detective — read the sentence again! 👀", "#FDE9E9");
-  }
-}
-
-/* ------------------------------------------------------------ Year 2 */
+/* ------------------------------------------------------------ word bank
+   Same bank for both years — the server decides what's in it
+   (Year 1: answers only; Year 2: answers + distractors). */
 
 function renderBank() {
   wordBank.innerHTML = "";
@@ -284,17 +230,33 @@ function renderBank() {
     d.className = "word";
     d.textContent = word;
     d.onclick = () => {
-      if (locked[currentGap] || currentGap === null) return;
-      answers[currentGap] = word;
-      const next = nextEmptyGap();          // auto-advance to the next empty gap
+      if (d.classList.contains("used")) return;
+      /* fill the selected gap if it's free, otherwise the next empty one */
+      const target = (!locked[currentGap] && answers[currentGap] === null)
+        ? currentGap
+        : nextEmptyGap();
+      if (target === null) return;
+      answers[target] = word;
+      const next = nextEmptyGap();
       if (next !== null) currentGap = next;
       renderStory();
-      updateProgress();
+      refreshBankUsed();
+      updateFilledProgress();
     };
     wordBank.appendChild(d);
   });
-  highlightGap(0);
+  refreshBankUsed();
 }
+
+/* grey out words that are currently placed in a gap */
+function refreshBankUsed() {
+  const inUse = new Set(answers.filter(a => a !== null));
+  wordBank.querySelectorAll(".word").forEach(el => {
+    el.classList.toggle("used", inUse.has(el.textContent));
+  });
+}
+
+/* ------------------------------------------------------------ checking */
 
 checkButton.onclick = async () => {
   if (answers.some((a, i) => a === null && !locked[i])) {
@@ -315,6 +277,7 @@ checkButton.onclick = async () => {
   const next = nextEmptyGap();
   if (next !== null) currentGap = next;
   renderStory();
+  refreshBankUsed();
   updateProgress();
   message(
     wrong === 1
@@ -346,8 +309,7 @@ function finish(result) {
   starsEarned.textContent = "★".repeat(result.stars) + "☆".repeat(3 - result.stars);
   completedStory.textContent = result.full_text;
   completedCard.classList.remove("hidden");
-  year1Panel.classList.add("hidden");
-  year2Panel.classList.add("hidden");
+  wordPanel.classList.add("hidden");
   actionButtons.classList.add("hidden");
   messageBox.classList.add("hidden");
   progressFill.style.width = "100%";
@@ -355,12 +317,22 @@ function finish(result) {
   scoreProgress.textContent = gapCount() + " / " + gapCount();
 }
 
+/* confirmed-correct progress (after a check) */
 function updateProgress() {
   const total = gapCount();
   const done = solvedCount();
   progressFill.style.width = (total ? (done / total) * 100 : 0) + "%";
   progressText.textContent = done + " / " + total;
   scoreProgress.textContent = done + " / " + total;
+}
+
+/* filled-in progress (while the child is choosing words) */
+function updateFilledProgress() {
+  const total = gapCount();
+  const filled = answers.filter((a, i) => a !== null || locked[i]).length;
+  progressFill.style.width = (total ? (filled / total) * 100 : 0) + "%";
+  progressText.textContent = filled + " / " + total;
+  scoreProgress.textContent = filled + " / " + total;
 }
 
 function message(text, color) {
@@ -370,7 +342,10 @@ function message(text, color) {
 }
 
 document.getElementById("newStoryBtn").onclick = loadStory;
-document.getElementById("resetButton").onclick = loadStory;
+document.getElementById("resetButton").onclick = () => {
+  storySelect.value = story ? story.id : storySelect.value;  // retry the same story
+  loadStory();
+};
 
 setMode("{{ initial_mode | default('year1') }}");
 </script>

@@ -1804,6 +1804,13 @@ table#sd-grid td {
   transition: transform 0.08s ease;
 }
 
+.theme-detective .word.used {
+  opacity: 0.35;
+  box-shadow: none;
+  transform: none;
+  pointer-events: none;
+}
+
 .theme-detective .option:hover,
 .theme-detective .word:hover { border-color: var(--accent); }
 
