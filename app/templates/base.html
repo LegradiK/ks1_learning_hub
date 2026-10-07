@@ -22,6 +22,17 @@
       <a class="nav-btn about-btn" href="{{ url_for('hub.about') }}">ℹ️ About</a>
 
       <details class="nav-dropdown">
+        <summary class="nav-btn">🏫 School Learning</summary>
+        <div class="dropdown-menu">
+          <a class="dropdown-item" href="">Spelling Preparation</a>
+          <a class="dropdown-item" href="">English Comprehension</a>
+          <a class="dropdown-item" href="">Science</a>
+          <a class="dropdown-item" href="">History</a>
+          <a class="dropdown-item" href="">Online Safety</a>
+        </div>
+      </details>
+
+      <details class="nav-dropdown">
         <summary class="nav-btn">🎮 Home Learning - Games</summary>
         <div class="dropdown-menu">
           <a class="dropdown-item" href="{{ url_for('word_wizard.game') }}"><img src="{{ url_for('static', filename='wizard.png') }}" style="width:1em;height:1em;vertical-align:middle;"> Word Wizard</a>
