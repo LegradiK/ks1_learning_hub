@@ -10,7 +10,7 @@ load_dotenv(os.path.join(BASE_DIR, 'data.env'))
 
 def create_app():
     app = Flask(__name__)
-    app.secret_key = os.getenv("FLASK_KEY")
+    app.secret_key = os.environ.get("FLASK_KEY")
 
     from app.hub import bp as hub_bp
     from app.letter_quest import bp as letter_quest_bp
