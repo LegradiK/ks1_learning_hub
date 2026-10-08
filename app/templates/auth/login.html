@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Log in — KS1 Learning Hub{% endblock %}
+{% block theme %}theme-hub{% endblock %}
+
+{% block content %}
+<section class="login-card">
+  <span class="subject-badge" aria-hidden="true">👋</span>
+  <h1>Who's playing?</h1>
+
+  <form method="post" action="{{ url_for('auth.login') }}" id="login-form" autocomplete="off">
+    <input type="hidden" name="next" value="{{ next or '' }}">
+    <input type="hidden" name="pin" id="pin-value">
+
+    <label class="login-label" for="login-name">Your name</label>
+    <input class="spelling-input login-name" id="login-name" name="name" value="{{ name }}"
+           maxlength="40" autocapitalize="words" spellcheck="false" required>
+
+    <p class="login-label" id="pin-label">Your secret number</p>
+    <div class="pin-dots" aria-labelledby="pin-label" aria-live="polite">
+      <span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="pin-pad">
+      {% for n in [1, 2, 3, 4, 5, 6, 7, 8, 9] %}
+      <button type="button" class="num-btn" data-digit="{{ n }}">{{ n }}</button>
+      {% endfor %}
+      <button type="button" class="num-btn pin-clear" data-action="back" aria-label="Delete">⌫</button>
+      <button type="button" class="num-btn" data-digit="0">0</button>
+      <span></span>
+    </div>
+
+    <p class="login-msg" id="login-msg" role="status"></p>
+
+    <button type="submit" class="jelly-btn btn-big login-go" id="login-go">Let's go! 🚀</button>
+    <p class="login-note">The first time on a new device, a Puter window opens so the games can talk.</p>
+    <button type="button" class="login-skip" id="login-skip">Grown-ups: Puter not working? Play without voices</button>
+  </form>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+  const form = document.getElementById('login-form');
+  const nameInput = document.getElementById('login-name');
+  const pinValue = document.getElementById('pin-value');
+  const dots = document.querySelectorAll('.pin-dots span');
+  const msg = document.getElementById('login-msg');
+  const go = document.getElementById('login-go');
+  let pin = '';
+
+  const say = text => { msg.textContent = text; };
+  function drawPin() {
+    dots.forEach((d, i) => d.classList.toggle('filled', i < pin.length));
+    pinValue.value = pin;
+  }
+  function addDigit(d) { if (pin.length < 4) { pin += d; drawPin(); say(''); } }
+  function backspace() { pin = pin.slice(0, -1); drawPin(); }
+
+  document.querySelectorAll('.pin-pad [data-digit]').forEach(b =>
+    b.addEventListener('click', () => addDigit(b.dataset.digit)));
+  document.querySelector('.pin-pad [data-action="back"]').addEventListener('click', backspace);
+
+  // typing numbers on a keyboard works too (when not typing the name)
+  document.addEventListener('keydown', e => {
+    if (document.activeElement === nameInput) return;
+    if (/^[0-9]$/.test(e.key)) addDigit(e.key);
+    else if (e.key === 'Backspace') backspace();
+  });
+
+  function ready() {
+    if (!nameInput.value.trim()) { say('Type your name first ✏️'); nameInput.focus(); return false; }
+    if (pin.length !== 4) { say('Your secret number has 4 digits 🔢'); return false; }
+    return true;
+  }
+
+  // One tap does both: sign in to Puter (if needed), then log in to the hub.
+  // Puter has to open its window straight from the tap, or the browser blocks it.
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!ready()) return;
+    go.disabled = true;
+
+    if (window.puter && !puter.auth.isSignedIn()) {
+      say('Signing in to Puter… 🔊');
+      try {
+        await puter.auth.signIn();
+      } catch (err) {
+        console.warn('Puter sign-in did not finish', err);
+        say("The Puter window closed before signing in. Tap Let's go to try again.");
+        go.disabled = false;
+        return;
+      }
+    }
+    form.submit();
+  });
+
+  document.getElementById('login-skip').addEventListener('click', () => {
+    if (ready()) form.submit();
+  });
+
+  drawPin();
+  if (!nameInput.value) nameInput.focus();
+})();
+</script>
+{% endblock %}

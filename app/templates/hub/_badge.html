@@ -1,0 +1,7 @@
+<span class="subject-badge" aria-hidden="true">
+  {%- if item.badge_img -%}
+    <img src="{{ url_for('static', filename=item.badge_img) }}" alt="" style="width:1em;height:1em;vertical-align:middle;">
+  {%- else -%}
+    {{ item.badge }}
+  {%- endif -%}
+</span>

@@ -1,0 +1,65 @@
+{
+  "_note": "Weekly spelling lists from school. To add a week, copy a week block, give it the next week number, and fill in the words. 'sentence' is read aloud between the word, like a school spelling test (optional - leave it out and the word is just said twice).",
+  "weeks": [
+    {
+      "week": 1,
+      "words": [
+        {"word": "bright",   "sentence": "The sun is very bright today."},
+        {"word": "show",     "sentence": "Can you show me your drawing?"},
+        {"word": "straight", "sentence": "Draw a straight line with your ruler."},
+        {"word": "alone",    "sentence": "The cat sat alone in the garden."},
+        {"word": "please",   "sentence": "Can I have a drink, please?"},
+        {"word": "great",    "sentence": "We had a great time at the park."},
+        {"word": "family",   "sentence": "My family went to the seaside."},
+        {"word": "time",     "sentence": "What time is it?"},
+        {"word": "you",      "sentence": "Thank you for helping me."},
+        {"word": "are",      "sentence": "You are my best friend."}
+      ]
+    },
+    {
+      "week": 2,
+      "words": [
+        {"word": "useful", "sentence": "A torch is useful in the dark."},
+        {"word": "share",  "sentence": "Let's share the sweets."},
+        {"word": "world",  "sentence": "There are lots of countries in the world."},
+        {"word": "mouth",  "sentence": "Open your mouth wide."},
+        {"word": "circle", "sentence": "Sit in a circle on the carpet."},
+        {"word": "true",   "sentence": "Is that story true?"},
+        {"word": "about",  "sentence": "This book is about dinosaurs."},
+        {"word": "where",  "sentence": "Where are my shoes?"},
+        {"word": "I",      "sentence": "I like to play football."},
+        {"word": "to",     "sentence": "We are going to the park."}
+      ]
+    },
+    {
+      "week": 3,
+      "words": [
+        {"word": "before",    "sentence": "Wash your hands before lunch."},
+        {"word": "chance",    "sentence": "Everyone gets a chance to play."},
+        {"word": "station",   "sentence": "The train stopped at the station."},
+        {"word": "usual",     "sentence": "We had pasta on Monday, as usual."},
+        {"word": "explosion", "sentence": "The volcano made a loud explosion."},
+        {"word": "talk",      "sentence": "Please don't talk in the library."},
+        {"word": "pitch",     "sentence": "The players ran onto the football pitch."},
+        {"word": "delicious", "sentence": "This cake is delicious!"},
+        {"word": "no",        "sentence": "No, thank you."},
+        {"word": "go",        "sentence": "Let's go outside to play."}
+      ]
+    },
+    {
+      "week": 4,
+      "words": [
+        {"word": "badge",   "sentence": "I got a badge for good work."},
+        {"word": "listen",  "sentence": "Please listen to the story."},
+        {"word": "castle",  "sentence": "The king lives in a castle."},
+        {"word": "instead", "sentence": "I had juice instead of milk."},
+        {"word": "colour",  "sentence": "What colour is your coat?"},
+        {"word": "young",   "sentence": "The puppy is very young."},
+        {"word": "charge",  "sentence": "I need to charge my tablet."},
+        {"word": "mother",  "sentence": "My mother read me a story."},
+        {"word": "the",     "sentence": "The dog is barking."},
+        {"word": "into",    "sentence": "The frog jumped into the pond."}
+      ]
+    }
+  ]
+}

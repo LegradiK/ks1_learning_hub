@@ -1,81 +1,24 @@
 {% extends "base.html" %}
 
-{% block title %}KS1 Learning Hub — Pick a game!{% endblock %}
+{% block title %}KS1 Learning Hub — Where shall we start?{% endblock %}
 {% block theme %}theme-hub{% endblock %}
 
 {% block content %}
 <header class="hub-hero">
-  <h1>What shall we learn today?</h1>
-  <p class="hub-sub">Tap a game to start playing</p>
+  <h1>What shall we do today?</h1>
+  <p class="hub-sub">Pick one to see what's inside</p>
 </header>
 
-<div class="subject-grid">
-  
-  <a class="subject-card theme-words" href="{{ url_for('word_wizard.game') }}">
-    <span class="subject-badge" aria-hidden="true"><img src="{{ url_for('static', filename='wizard.png') }}" style="width:1em;height:1em;vertical-align:middle;"></span>
-    <h2>Word Wizard</h2>
-    <p>Put on your wizard hat — listen closely and spell the magic words!</p>
-    <span class="jelly-btn card-cta">Play</span>
+<div class="subject-grid choice-grid">
+  {% set links = {"subjects": url_for('hub.subjects'),
+                  "brain-games": url_for('hub.group', slug='brain-games')} %}
+  {% for key, item in sections.items() %}
+  <a class="subject-card choice-card {{ item.theme }}" href="{{ links[key] }}">
+    {% include "hub/_badge.html" %}
+    <h2>{{ item.name }}</h2>
+    <p>{{ item.blurb }}</p>
+    <span class="jelly-btn card-cta">Let's go</span>
   </a>
-
-  <a class="subject-card theme-maths" href="{{ url_for('math_drill.index') }}">
-    <span class="subject-badge" aria-hidden="true">🔢</span>
-    <h2>Math Drill</h2>
-    <p>Quick-fire maths to sharpen your brain</p>
-    <span class="jelly-btn card-cta">Play</span>
-  </a>
-
-
-  <a class="subject-card theme-letters" href="{{ url_for('letter_quest.game') }}">
-    <span class="subject-badge" aria-hidden="true">🔤</span>
-    <h2>Letter Quest</h2>
-    <p>Crack the crossword with pictures or clues</p>
-    <span class="jelly-btn card-cta">Play</span>
-  </a>
-
-  <a class="subject-card theme-sudoku" href="{{ url_for('sudoku.game') }}">
-    <span class="subject-badge" aria-hidden="true">🧩</span>
-    <h2>Sudoku</h2>
-    <p>Fill every row, column and box — with numbers or animals!</p>
-    <span class="jelly-btn card-cta">Play</span>
-  </a>
-
-  <a class="subject-card theme-money" href="{{ url_for('money_counter.game') }}">
-    <span class="subject-badge" aria-hidden="true">💰</span>
-    <h2>Money Counter</h2>
-    <p>Count coins and notes, get expert on money counting!</p>
-    <span class="jelly-btn card-cta">Play</span>
-  </a>
-
-
-  <a class="subject-card theme-clock" href="{{ url_for('clock_master.game') }}">
-    <span class="subject-badge" aria-hidden="true">⏰</span>
-    <h2>Clock Master</h2>
-    <p>Tick tock — can you read the clock?</p>
-    <span class="jelly-btn card-cta">Play</span>
-  </a>
-
-  <a class="subject-card theme-pairs" href="{{ url_for('match_pairs.game') }}">
-    <span class="subject-badge" aria-hidden="true">🃏</span>
-    <h2>Match Pairs</h2>
-    <p>Flip, remember, match — pair every picture with its word!</p>
-    <span class="jelly-btn card-cta">Play</span>
-  </a>
-
-  <a class="subject-card theme-sound" href="{{ url_for('phonics_fox.game') }}">
-    <span class="subject-badge" aria-hidden="true">🦊</span>
-    <h2>Phonics Fox</h2>
-    <p>Hear the word, spot the sound, spell it right!</p>
-    <span class="jelly-btn card-cta">Play</span>
-  </a>
-
-  <a class="subject-card theme-detective" href="{{ url_for('story_detective.game') }}">
-    <span class="subject-badge" aria-hidden="true">🔍</span>
-    <h2>Story Detective</h2>
-    <p>Some words have gone missing — can you crack the case?</p>
-    <span class="jelly-btn card-cta">Play</span>
-  </a>
-
-
+  {% endfor %}
 </div>
 {% endblock %}

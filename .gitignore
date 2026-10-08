@@ -8,3 +8,6 @@ data.env
 env/
 venv/
 
+
+# local SQLite database used when DATABASE_URL isn't set
+instance/

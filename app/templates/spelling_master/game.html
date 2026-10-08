@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}Spelling Master — KS1 Learning Hub{% endblock %}
+{% block theme %}theme-words{% endblock %}
+
+{% block content %}
+<header class="game-header">
+  <span class="subject-badge" aria-hidden="true">🏆</span>
+  <div>
+    <h1>Spelling Master</h1>
+    <p class="game-sub">Listen to the word, then spell it!</p>
+  </div>
+  <div class="score-bar sm-scores">
+    <div class="sc"><div class="sc-val" id="sm-right">0</div><div class="sc-lbl">👍 right</div></div>
+    <div class="sc sc-streak"><div class="sc-val" id="sm-streak">0</div><div class="sc-lbl">🔥 streak</div></div>
+  </div>
+</header>
+
+<!-- pick what to practise -->
+<div class="mode-toggle sm-picker" role="group" aria-label="Choose a spelling list">
+  {% for w in weeks %}
+  <button class="mode-btn" data-mode="week" data-week="{{ w.week }}">Week {{ w.week }}</button>
+  {% endfor %}
+  <button class="mode-btn" data-mode="random">🎲 Random</button>
+  <button class="mode-btn" data-mode="tricky" id="sm-tricky-btn">🔥 Tricky words</button>
+</div>
+
+<!-- how to test: the word on its own, or the word inside its sentence -->
+<div class="sm-test-type">
+  <span class="control-label">Test:</span>
+  <div class="mode-toggle" role="group" aria-label="Choose how to be tested">
+    <button class="mode-btn" data-test="words">🔤 Words only</button>
+    <button class="mode-btn" data-test="sentences">📝 Words in sentences</button>
+  </div>
+
+  <span class="voice-label">Voice:</span>
+  <div class="voice-btns">
+    <button class="speech-voice-btn" data-voice="man" onclick="switchVoices(event, 'man')">
+      <img src="{{ url_for('static', filename='man.png') }}" alt="" style="width:1em;height:1em;vertical-align:middle;"> Man
+    </button>
+    <button class="speech-voice-btn active" data-voice="woman" onclick="switchVoices(event, 'woman')">
+      <img src="{{ url_for('static', filename='woman.png') }}" alt="" style="width:1em;height:1em;vertical-align:middle;"> Woman
+    </button>
+  </div>
+</div>
+
+<div class="game-layout">
+  <section class="card">
+    <!-- start screen -->
+    <div id="sm-start" class="main-content">
+      <p class="instruction">Pick a week, or try 🎲 Random to mix every week together.</p>
+    </div>
+
+    <!-- one word at a time -->
+    <div id="sm-play" class="main-content" hidden>
+      <div class="progress-area">
+        <span class="progress-label" id="sm-round-title"></span>
+        <div class="progress-bar"><div class="progress-fill" id="sm-progress" style="width:0%"></div></div>
+        <span class="score-badge" id="sm-count"></span>
+      </div>
+
+      <p class="sentence-display" id="sm-sentence" hidden></p>
+
+      <button class="big-btn btn-listen" id="sm-listen">🔊 Listen</button>
+
+      <div class="spelling-input-area">
+        <label class="spelling-label" for="sm-input" id="sm-input-label">Type the word:</label>
+        <input class="spelling-input" id="sm-input" autocomplete="off" autocapitalize="off"
+               autocorrect="off" spellcheck="false">
+      </div>
+
+      <div class="word-reveal" id="sm-reveal" hidden>
+        <div class="letter-tiles" id="sm-tiles"></div>
+        <p class="word-hint" id="sm-hint"></p>
+      </div>
+
+      <p class="feedback" id="sm-feedback"></p>
+
+      <div class="btn-row">
+        <button class="big-btn btn-check" id="sm-check">✅ Check</button>
+        <button class="big-btn btn-next" id="sm-next" hidden>➡️ Next word</button>
+      </div>
+    </div>
+
+    <!-- end of round -->
+    <div id="sm-done" class="completion">
+      <div class="completion-emoji" id="sm-done-emoji">🏆</div>
+      <h2 id="sm-done-title">Round complete!</h2>
+      <p id="sm-done-score"></p>
+      <div id="sm-done-missed"></div>
+      <div class="btn-row">
+        <button class="big-btn btn-listen" id="sm-again">🔁 Try again</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- words the child keeps getting wrong -->
+  <aside class="card sm-tricky">
+    <h2>🔥 Words to practise</h2>
+    <p class="hint" id="sm-tricky-empty">No tricky words yet — keep spelling!</p>
+    <ul class="sm-tricky-list" id="sm-tricky-list"></ul>
+    <button class="sm-reset" id="sm-reset">Grown-ups: reset progress</button>
+  </aside>
+</div>
+
+<style>
+  .sm-picker { flex-wrap: wrap; }
+  .sm-scores { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
+  .sm-scores .sc { min-width: 5.5rem; }
+  .sm-test-type { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .sm-test-type .mode-toggle { margin-bottom: 0; }
+  .sm-gap {
+    display: inline-block; min-width: 4.5em; padding: 0 0.5rem;
+    border-bottom: 4px dashed var(--accent); color: var(--accent); font-weight: 700;
+  }
+  .sm-gap.filled { border-bottom-style: solid; }
+  .sm-gap.right { color: var(--good); border-color: var(--good); }
+  .sm-gap.wrong { color: var(--bad);  border-color: var(--bad); }
+  .btn-check { background: var(--good); }
+  .letter-tile.fix { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+  .letter-tile.ok  { background: var(--good-soft); border-color: var(--good); }
+  .sm-tricky h2 { font-size: 1.2rem; margin-bottom: 0.6rem; }
+  .sm-tricky-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+  .sm-tricky-list li { background: var(--accent-soft); border-radius: var(--radius-sm); padding: 0.5rem 0.8rem; }
+  .sm-tricky-list strong { font-family: var(--font-display); font-size: 1.15rem; }
+  .sm-tricky-list small { display: block; color: var(--ink-soft); font-size: 0.85rem; }
+  .sm-reset { margin-top: 1rem; background: none; border: none; color: var(--ink-soft);
+              font-size: 0.85rem; text-decoration: underline; cursor: pointer; }
+  .sm-missed { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; }
+  .sm-missed li { background: var(--bad-soft); border-radius: 999px; padding: 0.3rem 0.9rem; }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='speech.js') }}"></script>
+<script>
+(() => {
+  const API = {
+    round:  "{{ url_for('spelling_master.new_round') }}",
+    check:  "{{ url_for('spelling_master.check') }}",
+    tricky: "{{ url_for('spelling_master.tricky') }}",
+    reset:  "{{ url_for('spelling_master.reset') }}",
+  };
+  const $ = id => document.getElementById(id);
+  // progress is saved to the child's account on the server — nothing kept here
+
+  async function post(url, body) {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (res.status === 401) {          // logged out (e.g. in another tab) → back to login
+      window.location = "{{ url_for('auth.login') }}?next=" + encodeURIComponent(location.pathname);
+      throw new Error("Logged out");
+    }
+    if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+    return res.json();
+  }
+
+  // ── test type: "words" or "sentences", remembered on this device ──
+  const TEST_KEY = "spellingMaster.testType";
+  let testType = "words";
+  try { testType = localStorage.getItem(TEST_KEY) === "sentences" ? "sentences" : "words"; } catch {}
+
+  // sentence test only works when the word has a sentence that contains it
+  const usesSentence = item => testType === "sentences" && item.gap;
+
+  const pause = ms => new Promise(r => setTimeout(r, ms));
+  let speaking = 0;   // newer Listen presses cancel older ones
+  async function sayWord(item) {
+    const id = ++speaking;
+    const steps = usesSentence(item)
+      ? [item.sentence, item.word]          // hear it in context, then on its own
+      : [item.word, item.word];             // just the word, twice
+    for (const [i, text] of steps.entries()) {
+      if (id !== speaking) return;
+      if (i) await pause(700);
+      await speakAsync(text);   // Puter voice, from static/speech.js
+    }
+  }
+
+  // ── game state ──
+  let lastPick = null;          // {mode, week} so "Try again" repeats it
+  let words = [], index = 0, roundRight = 0, missed = [];
+  let totalRight = 0, streak = 0, checked = false;
+
+  function show(which) {
+    $("sm-start").hidden = which !== "start";
+    $("sm-play").hidden  = which !== "play";
+    $("sm-done").classList.toggle("show", which === "done");
+  }
+
+  async function startRound(mode, week) {
+    lastPick = { mode, week };
+    document.querySelectorAll(".sm-picker .mode-btn").forEach(b => {
+      b.classList.toggle("active", b.dataset.mode === mode && (mode !== "week" || b.dataset.week == week));
+    });
+    const data = await post(API.round, { mode, week });
+    if (!data.words.length) {
+      show("start");
+      $("sm-start").querySelector(".instruction").textContent =
+        "No tricky words yet — every word you've tried has been right! 🌟";
+      return;
+    }
+    words = data.words; index = 0; roundRight = 0; missed = [];
+    $("sm-round-title").textContent = data.title;
+    show("play");
+    showWord();
+  }
+
+  function renderSentence(item, filled, cls = "") {
+    const box = $("sm-sentence");
+    if (!usesSentence(item)) { box.hidden = true; return; }
+    box.hidden = false;
+    box.textContent = "";
+    const gap = document.createElement("span");
+    gap.className = `sm-gap ${filled ? "filled " + cls : ""}`;
+    gap.textContent = filled || "\u00A0";
+    box.append(item.gap.before, gap, item.gap.after);
+  }
+
+  function showWord() {
+    checked = false;
+    const item = words[index];
+    renderSentence(item);
+    $("sm-input-label").textContent = usesSentence(item) ? "Type the missing word:" : "Type the word:";
+    $("sm-input").value = "";
+    $("sm-input").disabled = false;
+    $("sm-reveal").hidden = true;
+    $("sm-feedback").className = "feedback";
+    $("sm-check").hidden = false;
+    $("sm-next").hidden = true;
+    $("sm-count").textContent = `${index + 1} / ${words.length}`;
+    $("sm-progress").style.width = `${(index / words.length) * 100}%`;
+    $("sm-input").focus();
+    sayWord(words[index]);
+  }
+
+  async function checkAnswer() {
+    if (checked) return;
+    const attempt = $("sm-input").value.trim();
+    if (!attempt) { $("sm-input").focus(); return; }
+    checked = true;
+    $("sm-input").disabled = true;
+
+    const item = words[index];
+    const result = await post(API.check, { word: item.word, attempt });
+
+    const tiles = $("sm-tiles");
+    tiles.innerHTML = "";
+    result.letters.forEach(({ letter, status }) => {
+      const t = document.createElement("span");
+      t.className = `letter-tile ${status}`;
+      t.textContent = letter;
+      tiles.appendChild(t);
+    });
+    $("sm-reveal").hidden = false;
+    renderSentence(item, item.word, result.correct ? "right" : "wrong");
+
+    const fb = $("sm-feedback");
+    if (result.correct) {
+      roundRight++; totalRight++; streak++;
+      fb.textContent = ["Brilliant! 🌟", "Spot on! ✨", "Super speller! 🏆"][streak % 3];
+      fb.className = "feedback show great";
+      $("sm-hint").textContent = "";
+    } else {
+      streak = 0;
+      missed.push(item.word);
+      fb.textContent = "Nearly! Look at the red letters 👀";
+      fb.className = "feedback show keep-going";
+      $("sm-hint").textContent = `You wrote: ${attempt}`;
+    }
+    $("sm-right").textContent = totalRight;
+    $("sm-streak").textContent = streak;
+    $("sm-check").hidden = true;
+    $("sm-next").hidden = false;
+    $("sm-next").focus();
+    refreshTricky();
+  }
+
+  function nextWord() {
+    index++;
+    if (index < words.length) return showWord();
+    $("sm-progress").style.width = "100%";
+    const perfect = roundRight === words.length;
+    $("sm-done-emoji").textContent = perfect ? "🏆" : roundRight >= words.length / 2 ? "🌟" : "💪";
+    $("sm-done-title").textContent = perfect ? "Perfect score!" : "Round complete!";
+    $("sm-done-score").textContent = `You spelled ${roundRight} out of ${words.length} words right.`;
+    $("sm-done-missed").innerHTML = missed.length
+      ? `<p>Words to practise:</p><ul class="sm-missed">${missed.map(w => `<li>${w}</li>`).join("")}</ul>`
+      : "";
+    show("done");
+  }
+
+  async function refreshTricky() {
+    const data = await post(API.tricky, {});
+    const list = $("sm-tricky-list");
+    list.innerHTML = "";
+    data.words.forEach(w => {
+      const li = document.createElement("li");
+      const tried = w.misspellings.length ? `tried: ${w.misspellings.join(", ")}` : "";
+      li.innerHTML = `<strong></strong><small></small>`;
+      li.querySelector("strong").textContent = w.word;
+      li.querySelector("small").textContent =
+        `Week ${w.week} · wrong ${w.wrong}, right ${w.right}${tried ? " · " + tried : ""}`;
+      list.appendChild(li);
+    });
+    $("sm-tricky-empty").hidden = data.words.length > 0;
+  }
+
+  // ── wiring ──
+  document.querySelectorAll(".sm-picker .mode-btn").forEach(btn =>
+    btn.addEventListener("click", () =>
+      startRound(btn.dataset.mode, btn.dataset.week ? Number(btn.dataset.week) : null)));
+  $("sm-listen").addEventListener("click", () => sayWord(words[index]));
+  $("sm-check").addEventListener("click", checkAnswer);
+  $("sm-next").addEventListener("click", nextWord);
+  $("sm-again").addEventListener("click", () => lastPick && startRound(lastPick.mode, lastPick.week));
+  // Enter checks; after checking, focus jumps to "Next word" so Enter moves on
+  $("sm-input").addEventListener("keydown", e => { if (e.key === "Enter") checkAnswer(); });
+  $("sm-reset").addEventListener("click", async () => {
+    if (!confirm("Clear all of " + {{ g.child.name|tojson }} + "'s Spelling Master progress?")) return;
+    await post(API.reset, {});
+    refreshTricky();
+  });
+
+  function markTestType() {
+    document.querySelectorAll(".sm-test-type .mode-btn").forEach(b =>
+      b.classList.toggle("active", b.dataset.test === testType));
+  }
+  document.querySelectorAll(".sm-test-type .mode-btn").forEach(btn =>
+    btn.addEventListener("click", () => {
+      testType = btn.dataset.test;
+      try { localStorage.setItem(TEST_KEY, testType); } catch {}
+      markTestType();
+      // switch the word on screen straight away, unless it's already been checked
+      if (!$("sm-play").hidden && !checked && words[index]) showWord();
+    }));
+
+  markTestType();
+  show("start");
+  refreshTricky();
+})();
+</script>
+{% endblock %}

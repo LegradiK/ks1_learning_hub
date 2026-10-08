@@ -228,6 +228,41 @@ h2 { font-size: clamp(1.3rem, 3vw, 1.7rem); }
 
 .card-cta { margin-top: 0.6rem; min-width: 130px; }
 
+/* ---------- hub: top-level choice + back link ---------- */
+.choice-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.choice-card { padding: 2.75rem 2rem; }
+.choice-card .subject-badge { width: 110px; height: 110px; font-size: 3.3rem; }
+.choice-card h2 { font-size: 1.8rem; }
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+.back-link:hover { background: var(--accent-soft); }
+
+.subject-card.is-soon { opacity: 0.6; cursor: default; }
+.subject-card.is-soon:hover { transform: none; border-color: var(--accent-soft); }
+.soon-tag {
+  margin-top: 0.6rem;
+  padding: 0.35rem 1rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
 /* ---------- shared game page bits ---------- */
 .game-header {
   display: flex;
@@ -1934,3 +1969,46 @@ a.about:hover {
 }
 
 .about-list li { margin-bottom: 0.5rem; }
+/* ---------- login ---------- */
+.login-card {
+  max-width: 420px;
+  margin: 1rem auto 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.8rem;
+  background: var(--panel);
+  border: 3px solid var(--accent-soft);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 2rem 1.5rem;
+}
+.login-card form { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; width: 100%; }
+.login-label { font-family: var(--font-display); font-weight: 600; color: var(--ink-soft); margin: 0.6rem 0 0; }
+.login-name { width: 100%; }
+
+.pin-dots { display: flex; gap: 0.8rem; margin: 0.2rem 0 0.4rem; }
+.pin-dots span {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 3px solid var(--accent); background: var(--panel);
+  transition: background 0.1s ease;
+}
+.pin-dots span.filled { background: var(--accent); }
+
+.pin-pad { display: grid; grid-template-columns: repeat(3, 72px); gap: 0.6rem; }
+.pin-pad .num-btn { height: 64px; }
+.pin-pad .pin-clear { background: var(--bad-soft); border-color: var(--bad); }
+
+.login-msg { min-height: 1.4em; margin: 0.2rem 0; color: var(--bad); font-family: var(--font-display); }
+.login-go { width: 100%; }
+.login-go:disabled { opacity: 0.6; cursor: default; }
+.login-note { font-size: 0.9rem; color: var(--ink-soft); margin: 0; }
+.login-skip {
+  background: none; border: none; cursor: pointer;
+  color: var(--ink-soft); font-size: 0.8rem; text-decoration: underline;
+}
+
+/* ---------- topbar: who's playing + voices ---------- */
+.nav-menus form { margin: 0; }
+.puter-btn { background: var(--bad-soft); border-color: var(--bad); }

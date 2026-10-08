@@ -95,7 +95,7 @@ const state = {};
 
 // ==================== SPEECH ====================
 let activeVoice = 'Amy';
-let puterReady = false;   // becomes true after a successful (temp) sign-in
+let puterReady = false;   // true once we've seen Puter is signed in
 
 function switchVoices(event, gender) {
     document.querySelectorAll('.speech-voice-btn').forEach(btn => btn.classList.remove('active'));
@@ -104,18 +104,15 @@ function switchVoices(event, gender) {
 }
 
 async function initPuter() {
+    // Uses the Puter account signed in at login. No guest accounts: if Puter
+    // isn't signed in, fall back to the browser voice and let the
+    // "Turn on voices" button in the top bar sign in again.
     if (puterReady) return true;
     if (!(window.puter && puter.ai && typeof puter.ai.txt2speech === 'function')) return false;
-    try {
-        if (!puter.auth.isSignedIn()) {
-            await Promise.race([
-                puter.auth.signIn({ attempt_temp_user_creation: true }),
-                new Promise((_, rej) => setTimeout(() => rej(new Error('sign-in timeout')), 5000))
-            ]);
-        }
-        puterReady = true;
-    } catch (err) {
-        console.warn('Puter sign-in failed, using browser voice:', err);
+    puterReady = puter.auth.isSignedIn();
+    if (!puterReady) {
+        const btn = document.getElementById('puter-btn');
+        if (btn) btn.hidden = false;
     }
     return puterReady;
 }

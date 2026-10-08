@@ -21,46 +21,62 @@
     <div class="nav-menus">
       <a class="nav-btn about-btn" href="{{ url_for('hub.about') }}">ℹ️ About</a>
 
+      {% if g.child %}
+      {# Menus are built from app/hub/activities.py (see the context processor in app/hub/__init__.py) #}
+      {% macro icon(item) -%}
+        {%- if item.badge_img -%}
+          <img src="{{ url_for('static', filename=item.badge_img) }}" alt="" style="width:1em;height:1em;vertical-align:middle;">
+        {%- else -%}{{ item.badge }}{%- endif -%}
+      {%- endmacro %}
+
       <details class="nav-dropdown">
-        <summary class="nav-btn">🏫 School Learning</summary>
+        <summary class="nav-btn">📚 School Subjects</summary>
         <div class="dropdown-menu">
-          <a class="dropdown-item" href="">Spelling Preparation</a>
-          <a class="dropdown-item" href="">English Comprehension</a>
-          <a class="dropdown-item" href="">Science</a>
-          <a class="dropdown-item" href="">History</a>
-          <a class="dropdown-item" href="">Online Safety</a>
+          <a class="dropdown-item dropdown-all" href="{{ url_for('hub.subjects') }}">All subjects →</a>
+          {% for subject in nav_subjects %}
+            {% if subject.count %}
+            <a class="dropdown-heading" href="{{ url_for('hub.group', slug=subject.slug) }}">{{ icon(subject) }} {{ subject.name }}</a>
+              {% for game in nav_activities if game.group == subject.slug %}
+              <a class="dropdown-item dropdown-sub" href="{{ url_for(game.endpoint) }}">{{ icon(game) }} {{ game.name }}</a>
+              {% endfor %}
+            {% else %}
+            <span class="dropdown-heading is-soon">{{ icon(subject) }} {{ subject.name }} <small>coming soon</small></span>
+            {% endif %}
+          {% endfor %}
         </div>
       </details>
 
       <details class="nav-dropdown">
-        <summary class="nav-btn">🎮 Home Learning - Games</summary>
+        <summary class="nav-btn">🎲 Brain Games</summary>
         <div class="dropdown-menu">
-          <a class="dropdown-item" href="{{ url_for('word_wizard.game') }}"><img src="{{ url_for('static', filename='wizard.png') }}" style="width:1em;height:1em;vertical-align:middle;"> Word Wizard</a>
-          <a class="dropdown-item" href="{{ url_for('math_drill.index') }}">🔢 Math Drill</a>
-          <a class="dropdown-item" href="{{ url_for('letter_quest.game') }}">🔤 Letter Quest</a> 
-          <a class="dropdown-item" href="{{ url_for('sudoku.game') }}">🧩 Sudoku</a>
-          <a class="dropdown-item" href="{{ url_for('money_counter.game') }}">💰 Money Counter</a>
-          <a class="dropdown-item" href="{{ url_for('clock_master.game') }}">⏰ Clock Master</a>
-          <a class="dropdown-item" href="{{ url_for('match_pairs.game') }}">🃏 Match Pairs</a>
-          <a class="dropdown-item" href="{{ url_for('phonics_fox.game') }}">🦊 Phonics Fox</a>
-          <a class="dropdown-item" href="{{ url_for('story_detective.game') }}">🔍  Story Detective</a>
+          {% for game in nav_activities if game.group == 'brain-games' %}
+          <a class="dropdown-item" href="{{ url_for(game.endpoint) }}">{{ icon(game) }} {{ game.name }}</a>
+          {% endfor %}
         </div>
       </details>
 
       <details class="nav-dropdown">
         <summary class="nav-btn">❓ How to play</summary>
         <div class="dropdown-menu">
-          <button class="dropdown-item" onclick="openHowto('word-wizard')"><img src="{{ url_for('static', filename='wizard.png') }}" style="width:1em;height:1em;vertical-align:middle;"> Word Wizard</button>
-          <button class="dropdown-item" onclick="openHowto('math-drill')">🔢 Math Drill</button>
-          <button class="dropdown-item" onclick="openHowto('letter-quest')">🔤 Letter Quest</button>
-          <button class="dropdown-item" onclick="openHowto('sudoku')">🧩 Sudoku</button>
-          <button class="dropdown-item" onclick="openHowto('money-counter')">💰 Money Counter</button>
-          <button class="dropdown-item" onclick="openHowto('clock-master')">⏰ Clock Master</button>
-          <button class="dropdown-item" onclick="openHowto('match-pairs')">🃏 Match Pairs</button>
-          <button class="dropdown-item" onclick="openHowto('phonics-fox')">🦊 Phonics Fox</button>
-          <button class="dropdown-item" onclick="openHowto('story-detective')">🔍 Story Detective</button>
+          {# howto id comes from the blueprint name: word_wizard.game -> word-wizard #}
+          {% for game in nav_activities %}
+          <button class="dropdown-item" onclick="openHowto('{{ game.endpoint.split('.')[0]|replace('_', '-') }}')">{{ icon(game) }} {{ game.name }}</button>
+          {% endfor %}
         </div>
       </details>
+
+      {# who's playing + Puter voice status + log out #}
+      <button class="nav-btn puter-btn" id="puter-btn" type="button" hidden
+              title="Sign in to Puter so the games can talk">🔇 Turn on voices</button>
+      <details class="nav-dropdown">
+        <summary class="nav-btn player-btn">👋 {{ g.child.name }}</summary>
+        <div class="dropdown-menu">
+          <form method="post" action="{{ url_for('auth.logout') }}">
+            <button class="dropdown-item" type="submit">🚪 Log out</button>
+          </form>
+        </div>
+      </details>
+      {% endif %}
     </div>
   </nav>
 
@@ -313,6 +329,36 @@
         </ul>
       </div>
 
+      <div class="howto-page" id="howto-spelling-master" style="display:none">
+        <h2>🏆 Spelling Master</h2>
+        <p>Practise this week's spellings from school — and beat your tricky words!</p>
+
+        <h3>📅 Pick your words</h3>
+        <ul>
+          <li><strong>Week 1, 2, 3…</strong> — all the words from that week's spelling list</li>
+          <li><strong>🎲 Random</strong> — words from every week mixed up. Words you find tricky come up more often!</li>
+          <li><strong>🔥 Tricky words</strong> — only the words you've spelled wrong before</li>
+        </ul>
+
+        <hr class="modal-divider">
+
+        <h3>✏️ Two ways to be tested</h3>
+        <ul>
+          <li><strong>🔤 Words only</strong> — listen to the word, then type it</li>
+          <li><strong>📝 Words in sentences</strong> — read and listen to the sentence, then type the missing word in the gap</li>
+          <li>Press <strong>🔊 Listen</strong> to hear it again as many times as you like</li>
+          <li>Press <strong>✅ Check</strong> or hit <strong>Enter</strong> — red letters show which bit to practise</li>
+        </ul>
+
+        <hr class="modal-divider">
+
+        <h3>🔥 Words to practise</h3>
+        <ul>
+          <li>Words you get wrong are saved, so you can practise them next time — on any device</li>
+          <li>Spell a tricky word right a few times and it leaves the list!</li>
+        </ul>
+      </div>
+
         <div class="howto-page" id="howto-story-detective" style="display:none">
         <h2>🔍 Story Detective</h2>
         <p>Some words have gone missing — can you crack the case?</p>
@@ -361,6 +407,22 @@
   </script>
 
   <script src="https://js.puter.com/v2/"></script>
+  {% if g.child %}
+  <script>
+    // Logged in to the site but not to Puter (e.g. Puter signed out on its own)?
+    // Show "Turn on voices" — signing in needs a tap because Puter opens a pop-up.
+    (() => {
+      const btn = document.getElementById('puter-btn');
+      if (!btn || !window.puter) return;
+      const refresh = () => { btn.hidden = puter.auth.isSignedIn(); };
+      btn.addEventListener('click', async () => {
+        try { await puter.auth.signIn(); } catch (err) { console.warn('Puter sign-in cancelled', err); }
+        refresh();
+      });
+      refresh();
+    })();
+  </script>
+  {% endif %}
   {% block scripts %}{% endblock %}
 
 </body>

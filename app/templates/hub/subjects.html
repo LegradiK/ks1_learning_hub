@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}KS1 Learning Hub — School Subjects{% endblock %}
+{% block theme %}theme-hub{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{{ url_for('hub.index') }}">← Back</a>
+
+<header class="hub-hero">
+  <h1>School Subjects</h1>
+  <p class="hub-sub">Which subject shall we practise?</p>
+</header>
+
+<div class="subject-grid">
+  {% for item in subjects %}
+    {% if item.count %}
+    <a class="subject-card {{ item.theme }}" href="{{ url_for('hub.group', slug=item.slug) }}">
+      {% include "hub/_badge.html" %}
+      <h2>{{ item.name }}</h2>
+      <p>{{ item.blurb }}</p>
+      <span class="jelly-btn card-cta">{{ item.count }} game{{ 's' if item.count != 1 }}</span>
+    </a>
+    {% else %}
+    <div class="subject-card is-soon {{ item.theme }}" aria-disabled="true">
+      {% include "hub/_badge.html" %}
+      <h2>{{ item.name }}</h2>
+      <p>{{ item.blurb }}</p>
+      <span class="soon-tag">Coming soon</span>
+    </div>
+    {% endif %}
+  {% endfor %}
+</div>
+{% endblock %}
