@@ -69,6 +69,19 @@
     else if (e.key === 'Backspace') backspace();
   });
 
+  // Turn Puter's error into something a grown-up can act on.
+  function puterProblem(err) {
+    const code = (err && (err.error || err.code || err.message)) || String(err);
+    if (/popup.?blocked/i.test(code)) {
+      return "Your browser blocked the Puter window. Allow pop-ups for this site " +
+             "(look for the blocked pop-up icon in the address bar), then tap Let's go again.";
+    }
+    if (/closed|cancel/i.test(code)) {
+      return "The Puter window was closed before signing in. Tap Let's go and finish signing in there.";
+    }
+    return `Puter sign-in didn't work (${code}). Tap Let's go to try again.`;
+  }
+
   function ready() {
     if (!nameInput.value.trim()) { say('Type your name first ✏️'); nameInput.focus(); return false; }
     if (pin.length !== 4) { say('Your secret number has 4 digits 🔢'); return false; }
@@ -88,7 +101,7 @@
         await puter.auth.signIn();
       } catch (err) {
         console.warn('Puter sign-in did not finish', err);
-        say("The Puter window closed before signing in. Tap Let's go to try again.");
+        say(puterProblem(err));
         go.disabled = false;
         return;
       }
