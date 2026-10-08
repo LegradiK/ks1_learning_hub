@@ -171,8 +171,8 @@
   async function sayWord(item) {
     const id = ++speaking;
     const steps = usesSentence(item)
-      ? [item.sentence, item.word]          // hear it in context, then on its own
-      : [item.word, item.word];             // just the word, twice
+      ? [item.sentence]          // hear it in context
+      : [item.word];             // just the word, once
     for (const [i, text] of steps.entries()) {
       if (id !== speaking) return;
       if (i) await pause(700);

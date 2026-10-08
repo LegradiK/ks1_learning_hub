@@ -178,7 +178,7 @@ def build_round(mode, week=None, history=None, size=ROUND_SIZE, rng=random):
     mode="week":   all words from one week, shuffled
     mode="random": words from every week; ones the child struggles with,
                    and ones never tried, come up more often
-    mode="tricky": only words the child has got wrong, worst first
+    mode="tricky": the words the child gets wrong most, shuffled
 
     Returns (title, words). Raises ValueError for a bad mode/week.
     """
@@ -199,7 +199,9 @@ def build_round(mode, week=None, history=None, size=ROUND_SIZE, rng=random):
 
     if mode == "tricky":
         lookup = {w["word"]: w for w in all_words()}
-        words = [lookup[t["word"]] for t in tricky_words(history, limit=size)]
+        # take the words he struggles with most, then ask them in a random order
+        words = [dict(lookup[t["word"]]) for t in tricky_words(history, limit=size)]
+        rng.shuffle(words)
         return "Tricky words", words
 
     raise ValueError(f"Unknown mode: {mode}")
