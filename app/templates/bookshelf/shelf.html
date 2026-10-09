@@ -11,7 +11,7 @@
   <p class="hub-sub">
     {% if counts.finished %}
       You've finished {{ counts.finished }} book{{ "" if counts.finished == 1 else "s" }}!
-      {% if counts.reading %}Currently reading: {{ counts.reading }}{% endif %}
+      {% if counts.reading %}Currently reading: {{ counts.reading }} book{{ "" if counts.finished == 1 else "s" }}{% endif %}
     {% else %}
       Every book you read goes on your shelf!
     {% endif %}
@@ -32,11 +32,6 @@
 </nav>
 
 <form method="get" class="bk-filters" id="filter-form">
-  <input type="hidden" name="status" value="{{ active_status }}">
-  <label class="bk-field bk-search">
-    <span>🔎 Find on my shelf</span>
-    <input type="search" name="q" value="{{ query }}" placeholder="Title or author…" autocomplete="off">
-  </label>
   <label class="bk-field">
     <span>Sort</span>
     <select name="sort" onchange="this.form.submit()">
@@ -63,6 +58,11 @@
     </select>
   </label>
   {% endif %}
+  <input type="hidden" name="status" value="{{ active_status }}">
+  <label class="bk-field bk-search">
+    <span>🔎 Find on my shelf</span>
+    <input type="search" name="q" value="{{ query }}" placeholder="Title or author…" autocomplete="off">
+  </label>
   <noscript><button class="jelly-btn" type="submit">Go</button></noscript>
 </form>
 
