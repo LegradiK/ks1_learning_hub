@@ -9,7 +9,12 @@
 <header class="hub-hero bk-hero">
   <h1>📕 {{ g.child.name }}'s Bookshelf</h1>
   <p class="hub-sub">
-    {% if counts.finished %}{{ counts.finished }} book{{ "" if counts.finished == 1 else "s" }} read so far!{% else %}Every book you read goes here{% endif %}
+    {% if counts.finished %}
+      You've finished {{ counts.finished }} book{{ "" if counts.finished == 1 else "s" }}!
+      {% if counts.reading %}And you're reading {{ counts.reading }} right now.{% endif %}
+    {% else %}
+      Every book you read goes on your shelf!
+    {% endif %}
   </p>
   <div class="bk-actions">
     <a class="jelly-btn" href="{{ url_for('bookshelf.add_page') }}">＋ Add a book</a>

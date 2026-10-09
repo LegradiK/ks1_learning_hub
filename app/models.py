@@ -96,3 +96,72 @@ class StudyLog(db.Model):
 
     child = db.relationship("Child", backref=db.backref(
         "study_logs", cascade="all, delete-orphan", lazy=True))
+
+# ── Bookshelf (reading log) ───────────────────────────────────────────────────
+BOOK_STATUSES = ("want_to_read", "reading", "finished")
+
+
+def _today_uk():
+    from app.study import today_uk          # late import: study imports models
+    return today_uk()
+
+
+class Book(db.Model):
+    """A book on a child's shelf (found via Google Books)."""
+    __tablename__ = "books"
+    __table_args__ = (db.UniqueConstraint("child_id", "google_books_id"),)
+
+    id = db.Column(db.Integer, primary_key=True)
+    child_id = db.Column(db.Integer, db.ForeignKey("children.id"), nullable=False, index=True)
+    title = db.Column(db.String(300), nullable=False)
+    author = db.Column(db.String(300))
+    isbn = db.Column(db.String(20), index=True)
+    cover_url = db.Column(db.String(500))
+    categories = db.Column(db.String(255))             # "Fantasy, Adventure"
+    google_books_id = db.Column(db.String(100))
+    status = db.Column(db.String(20), default="want_to_read", nullable=False)
+    added_on = db.Column(db.Date, default=_today_uk, nullable=False)
+    finished_on = db.Column(db.Date, nullable=True)    # first time it was marked finished
+    times_read = db.Column(db.Integer, default=0, nullable=False)
+
+    child = db.relationship("Child", backref=db.backref(
+        "books", cascade="all, delete-orphan", lazy=True))
+    logs = db.relationship(
+        "ReadingLog", backref="book", lazy=True, cascade="all, delete-orphan",
+        order_by="ReadingLog.date_read.desc()",
+    )
+
+    @property
+    def latest_log(self):
+        return self.logs[0] if self.logs else None
+
+    @property
+    def average_stars(self):
+        rated = [log.stars for log in self.logs if log.stars]
+        return round(sum(rated) / len(rated), 1) if rated else None
+
+    @property
+    def genre_list(self):
+        return [g.strip() for g in (self.categories or "").split(",") if g.strip()]
+
+    def set_status(self, status):
+        """Change status; the first switch to finished counts as a read."""
+        if status not in BOOK_STATUSES:
+            return
+        if status == "finished" and self.status != "finished":
+            self.finished_on = self.finished_on or _today_uk()
+            self.times_read = max(self.times_read or 0, 1)
+        if status != "finished":
+            self.times_read = 0
+        self.status = status
+
+
+class ReadingLog(db.Model):
+    """One reading of a book: when, how many stars, what they thought."""
+    __tablename__ = "reading_logs"
+
+    id = db.Column(db.Integer, primary_key=True)
+    book_id = db.Column(db.Integer, db.ForeignKey("books.id"), nullable=False, index=True)
+    date_read = db.Column(db.Date, default=_today_uk, nullable=False)
+    stars = db.Column(db.Integer)          # 1–5, optional
+    review = db.Column(db.Text)            # optional
