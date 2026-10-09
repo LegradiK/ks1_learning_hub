@@ -11,7 +11,7 @@
   <p class="hub-sub">
     {% if counts.finished %}
       You've finished {{ counts.finished }} book{{ "" if counts.finished == 1 else "s" }}!
-      {% if counts.reading %}And you're reading {{ counts.reading }} right now.{% endif %}
+      {% if counts.reading %}Currently reading: {{ counts.reading }}{% endif %}
     {% else %}
       Every book you read goes on your shelf!
     {% endif %}
