@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}KS1 Learning Hub — {{ book.title }}{% endblock %}
+{% block theme %}theme-shelf{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{{ url_for('bookshelf.shelf') }}">← My Bookshelf</a>
+
+<article class="bk-detail">
+  <aside class="bk-detail-side">
+    {% set cover_class = "bk-cover-big" %}
+    {% include "bookshelf/_cover.html" %}
+
+    <form method="post" action="{{ url_for('bookshelf.update_status', book_id=book.id) }}" class="bk-status-pick bk-status-col">
+      <span class="bk-label">On my shelf as…</span>
+      {% for key, label in [("finished", "✅ Finished"), ("reading", "📖 Reading now"), ("want_to_read", "💭 Want to read")] %}
+      <label><input type="radio" name="status" value="{{ key }}" {% if book.status == key %}checked{% endif %}
+                    onchange="this.form.submit()"><span>{{ label }}</span></label>
+      {% endfor %}
+      <noscript><button class="jelly-btn" type="submit">Save</button></noscript>
+    </form>
+  </aside>
+
+  <div class="bk-detail-main">
+    <h1 class="bk-detail-title">{{ book.title }}</h1>
+    {% if book.author %}<p class="bk-detail-author">by {{ book.author }}</p>{% endif %}
+
+    <div class="bk-facts">
+      {% if book.average_stars %}
+      <span class="bk-fact"><span class="bk-stars">{{ "★" * (book.average_stars|round|int) }}</span> {{ book.average_stars }}</span>
+      {% endif %}
+      {% if book.status == "finished" %}
+      <form method="post" action="{{ url_for('bookshelf.update_times_read', book_id=book.id) }}" class="bk-fact bk-times">
+        <label for="times_read">📚 Read</label>
+        <input type="number" id="times_read" name="times_read" min="1" max="999" value="{{ book.times_read or 1 }}">
+        <span>time{{ "" if book.times_read == 1 else "s" }}</span>
+        <button type="submit" class="bk-mini-btn">Save</button>
+      </form>
+      {% endif %}
+    </div>
+
+    {# genres: show, edit, or look up #}
+    <div class="bk-genres" id="genres">
+      <div class="bk-genre-view" id="genre-view">
+        {% for gn in book.genre_list %}<span class="bk-genre">{{ gn }}</span>{% else %}<span class="bk-muted">No genre yet</span>{% endfor %}
+        <button type="button" class="bk-mini-btn" onclick="toggleGenreEdit()" aria-label="Change genres">✏️</button>
+        <button type="button" class="bk-mini-btn" id="fetch-genres-btn"
+                data-url="{{ url_for('bookshelf.api_genres') }}"
+                data-isbn="{{ book.isbn or '' }}" data-title="{{ book.title }}" data-author="{{ book.author or '' }}"
+                title="Look up genres">🔎 Find genres</button>
+        <span class="bk-muted" id="genre-fetch-status" role="status"></span>
+      </div>
+      <form method="post" action="{{ url_for('bookshelf.update_genres', book_id=book.id) }}" class="bk-genre-edit" id="genre-edit" hidden>
+        <input type="text" name="categories" id="genre-input" value="{{ book.categories or '' }}"
+               placeholder="e.g. Fantasy, Adventure" autocomplete="off" aria-label="Genres, separated by commas">
+        <button type="submit" class="bk-mini-btn">Save</button>
+        <button type="button" class="bk-mini-btn" onclick="toggleGenreEdit()">Cancel</button>
+      </form>
+    </div>
+
+    {# log a reading #}
+    <section class="pr-card bk-log-card">
+      <h2>⭐ I read it!</h2>
+      <form method="post" action="{{ url_for('bookshelf.log_reading', book_id=book.id) }}" class="bk-log-form">
+        <div class="bk-log-row">
+          <label class="bk-field">
+            <span>When?</span>
+            <input type="date" name="date_read" value="{{ today.isoformat() }}" max="{{ today.isoformat() }}">
+          </label>
+          <fieldset class="bk-star-pick">
+            <legend>How many stars?</legend>
+            {% for i in range(5, 0, -1) %}
+            <input type="radio" name="stars" value="{{ i }}" id="star{{ i }}">
+            <label for="star{{ i }}" title="{{ i }} star{{ '' if i == 1 else 's' }}">★</label>
+            {% endfor %}
+          </fieldset>
+        </div>
+        <label class="bk-field">
+          <span>What did you think? <span class="bk-muted">(you don't have to)</span></span>
+          <textarea name="review" rows="3" maxlength="2000" placeholder="My favourite part was…"></textarea>
+        </label>
+        <button type="submit" class="jelly-btn">Save my reading</button>
+      </form>
+    </section>
+
+    {% if book.logs %}
+    <section class="bk-history">
+      <h2>📅 My readings</h2>
+      <ul>
+        {% for log in book.logs %}
+        <li class="bk-log">
+          <div class="bk-log-head">
+            <span class="bk-log-date">{{ log.date_read.day }} {{ log.date_read.strftime('%b %Y') }}</span>
+            {% if log.stars %}<span class="bk-stars" aria-label="{{ log.stars }} stars">{{ "★" * log.stars }}</span>{% endif %}
+            <form method="post" action="{{ url_for('bookshelf.delete_log', book_id=book.id, log_id=log.id) }}"
+                  onsubmit="return confirm('Delete this reading?');" class="bk-log-del">
+              <button type="submit" class="bk-mini-btn" aria-label="Delete this reading">🗑</button>
+            </form>
+          </div>
+          {% if log.review %}<p class="bk-review">“{{ log.review }}”</p>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('bookshelf.delete_book', book_id=book.id) }}"
+          onsubmit="return confirm('Take this book off your shelf?');" class="bk-remove">
+      <button type="submit" class="bk-link-danger">Take this book off my shelf</button>
+    </form>
+  </div>
+</article>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='bookshelf.js') }}"></script>
+{% endblock %}

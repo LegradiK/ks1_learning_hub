@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}KS1 Learning Hub — Add a book{% endblock %}
+{% block theme %}theme-shelf{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{{ url_for('bookshelf.shelf') }}">← My Bookshelf</a>
+
+<header class="hub-hero bk-hero">
+  <h1>🔎 Find a book</h1>
+  <p class="hub-sub">Type the book's name, or who wrote it</p>
+</header>
+
+<section class="bk-finder" id="finder"
+         data-search-url="{{ url_for('bookshelf.api_search') }}"
+         data-add-url="{{ url_for('bookshelf.add_book') }}"
+         data-add-many-url="{{ url_for('bookshelf.add_many') }}">
+  <input type="search" id="search-input" class="spelling-input bk-search-input"
+         placeholder="e.g. Dog Man, or Julia Donaldson" autocomplete="off" autofocus
+         aria-label="Book name or author">
+
+  <fieldset class="bk-status-pick">
+    <legend>Where does it go on your shelf?</legend>
+    <label><input type="radio" name="pick-status" value="finished" checked><span>✅ I've read it</span></label>
+    <label><input type="radio" name="pick-status" value="reading"><span>📖 Reading now</span></label>
+    <label><input type="radio" name="pick-status" value="want_to_read"><span>💭 Want to read</span></label>
+  </fieldset>
+
+  <p class="bk-search-msg" id="search-message" role="status" aria-live="polite"></p>
+  <div class="bk-grid bk-results" id="search-results"></div>
+  <div class="bk-more" id="load-more-wrap" hidden>
+    <button type="button" class="jelly-btn btn-quiet" id="load-more-btn">Show more books</button>
+  </div>
+</section>
+
+<div class="bk-bulk-bar" id="bulk-add-bar" hidden>
+  <span id="bulk-add-count">0 ticked</span>
+  <button type="button" class="jelly-btn" id="bulk-add-btn">＋ Add ticked books</button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='bookshelf.js') }}"></script>
+{% endblock %}

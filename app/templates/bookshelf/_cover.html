@@ -1,0 +1,9 @@
+{# A book cover; falls back to a coloured tile with the first letter if there's
+   no cover or the picture fails to load. Needs `book`. #}
+<div class="bk-cover {{ cover_class|default('') }}{% if not book.cover_url %} no-img{% endif %}">
+  {% if book.cover_url %}
+  <img src="{{ book.cover_url }}" alt="" loading="lazy" referrerpolicy="no-referrer"
+       onerror="this.parentElement.classList.add('no-img'); this.remove();">
+  {% endif %}
+  <span class="bk-cover-letter" aria-hidden="true">{{ (book.title or "?")[:1] }}</span>
+</div>

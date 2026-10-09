@@ -21,6 +21,13 @@ SECTIONS = {
         "blurb": "Puzzles and memory games to stretch your thinking — "
                  "just for fun!",
     },
+    "bookshelf": {
+        "name": "My Bookshelf",
+        "badge": "📕",
+        "theme": "theme-shelf",
+        "blurb": "Keep track of every book you read — give it stars "
+                 "and say what you thought!",
+    },
 }
 
 # Groups of activities. Each belongs to one section.

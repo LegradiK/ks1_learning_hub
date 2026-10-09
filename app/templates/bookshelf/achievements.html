@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}KS1 Learning Hub — Reading awards{% endblock %}
+{% block theme %}theme-shelf{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{{ url_for('bookshelf.shelf') }}">← My Bookshelf</a>
+
+<header class="hub-hero bk-hero">
+  <h1>🏆 My reading awards</h1>
+  <p class="hub-sub">{{ finished_count }} book{{ "" if finished_count == 1 else "s" }} finished</p>
+</header>
+
+<section class="pr-card bk-award-next">
+  {% if next_milestone %}
+  <div class="pr-game-top">
+    <h2>{{ books_to_next }} more book{{ "" if books_to_next == 1 else "s" }} to your next award!</h2>
+    <span class="pr-game-time">{{ finished_count }} / {{ next_milestone }}</span>
+  </div>
+  <div class="pr-bar bk-award-bar"><div class="pr-bar-fill" style="width: {{ [progress_pct, 2]|max }}%"></div></div>
+  {% else %}
+  <h2>🎉 You've unlocked every award. Amazing reading!</h2>
+  {% endif %}
+  {% if achieved %}
+  <a class="jelly-btn" href="{{ url_for('bookshelf.certificate') }}">📜 Print my {{ achieved[-1] }}-book certificate</a>
+  {% endif %}
+</section>
+
+<ul class="bk-awards">
+  {% for m in milestones %}
+  <li class="bk-award {% if m in achieved %}is-won{% elif m == next_milestone %}is-next{% endif %}">
+    <span class="bk-award-icon">{% if m in achieved %}🏆{% elif m == next_milestone %}⭐{% else %}🔒{% endif %}</span>
+    <span class="bk-award-num">{{ m }}</span>
+    <span class="bk-award-lbl">book{{ "" if m == 1 else "s" }}</span>
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}

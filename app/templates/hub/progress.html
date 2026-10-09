@@ -37,6 +37,11 @@
     <span class="pr-tile-lbl">answers right{% if r.accuracy is not none %} · {{ r.accuracy }}%{% endif %}</span>
   </div>
   <div class="pr-tile">
+    <span class="pr-tile-icon">📕</span>
+    <span class="pr-tile-val">{{ r.reading.count }}</span>
+    <span class="pr-tile-lbl">book{{ "" if r.reading.count == 1 else "s" }} read</span>
+  </div>
+  <div class="pr-tile">
     <span class="pr-tile-icon">🏆</span>
     <span class="pr-tile-val">{{ r.wins }}</span>
     <span class="pr-tile-lbl">puzzle{{ "" if r.wins == 1 else "s" }} finished</span>
@@ -57,6 +62,36 @@
     {% endfor %}
   </div>
   <p class="pr-note">Minutes each day</p>
+</section>
+
+{# ── reading (My Bookshelf) ── #}
+<section class="pr-card theme-shelf">
+  <div class="pr-group-head">
+    <h2>📕 Reading</h2>
+    <a class="pr-group-time" href="{{ url_for('bookshelf.shelf') }}">My Bookshelf →</a>
+  </div>
+  {% set rd = r.reading %}
+  <div class="pr-chips">
+    <span class="pr-chip">📕 {{ rd.count }} book{{ "" if rd.count == 1 else "s" }} read{% if rd.readings > rd.count %} ({{ rd.readings }} readings){% endif %}</span>
+    {% if rd.avg_stars %}<span class="pr-chip">⭐ {{ rd.avg_stars }} stars on average</span>{% endif %}
+    {% if rd.reviews %}<span class="pr-chip">✏️ {{ rd.reviews }} review{{ "" if rd.reviews == 1 else "s" }} written</span>{% endif %}
+    <span class="pr-chip pr-chip-soft">📖 {{ rd.reading_now }} reading now · {{ rd.on_shelf }} on the shelf</span>
+  </div>
+  {% if rd.books %}
+  <ul class="pr-reads">
+    {% for book in rd.books[:12] %}
+    <li class="pr-read">
+      <a href="{{ url_for('bookshelf.book', book_id=book.id) }}">
+        {% include "bookshelf/_cover.html" %}
+        <span class="pr-read-title">{{ book.title }}</span>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% if rd.books|length > 12 %}<p class="pr-note">…and {{ rd.books|length - 12 }} more</p>{% endif %}
+  {% else %}
+  <p class="pr-empty">No books logged {{ "in this time" if r.range_key != "all" else "yet" }} — tap <strong>I read it!</strong> on a book's page to log one.</p>
+  {% endif %}
 </section>
 
 {# ── every game, by subject ── #}

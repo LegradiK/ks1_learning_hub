@@ -11,7 +11,8 @@
 
 <div class="subject-grid choice-grid">
   {% set links = {"subjects": url_for('hub.subjects'),
-                  "brain-games": url_for('hub.group', slug='brain-games')} %}
+                  "brain-games": url_for('hub.group', slug='brain-games'),
+                  "bookshelf": url_for('bookshelf.shelf')} %}
   {% for key, item in sections.items() %}
   <a class="subject-card choice-card {{ item.theme }}" href="{{ links[key] }}">
     {% include "hub/_badge.html" %}

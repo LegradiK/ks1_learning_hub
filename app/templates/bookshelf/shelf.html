@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}KS1 Learning Hub — {{ g.child.name }}'s Bookshelf{% endblock %}
+{% block theme %}theme-shelf{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{{ url_for('hub.index') }}">← Back</a>
+
+<header class="hub-hero bk-hero">
+  <h1>📕 {{ g.child.name }}'s Bookshelf</h1>
+  <p class="hub-sub">
+    {% if counts.finished %}{{ counts.finished }} book{{ "" if counts.finished == 1 else "s" }} read so far!{% else %}Every book you read goes here{% endif %}
+  </p>
+  <div class="bk-actions">
+    <a class="jelly-btn" href="{{ url_for('bookshelf.add_page') }}">＋ Add a book</a>
+    <a class="jelly-btn btn-quiet" href="{{ url_for('bookshelf.achievements') }}">🏆 My awards</a>
+  </div>
+</header>
+
+{% set keep = dict(sort=sort, genre=selected_genre, author=selected_author, q=query) %}
+<nav class="pr-ranges bk-tabs" aria-label="Which books">
+  {% for key, label in [("all", "📚 All"), ("reading", "📖 Reading now"), ("finished", "✅ Finished"), ("want_to_read", "💭 Want to read")] %}
+  <a class="pr-range {% if active_status == key %}is-on{% endif %}"
+     href="{{ url_for('bookshelf.shelf', status=key, **keep) }}"
+     {% if active_status == key %}aria-current="page"{% endif %}>{{ label }} <span class="bk-tab-count">{{ counts[key] }}</span></a>
+  {% endfor %}
+</nav>
+
+<form method="get" class="bk-filters" id="filter-form">
+  <input type="hidden" name="status" value="{{ active_status }}">
+  <label class="bk-field bk-search">
+    <span>🔎 Find on my shelf</span>
+    <input type="search" name="q" value="{{ query }}" placeholder="Title or author…" autocomplete="off">
+  </label>
+  <label class="bk-field">
+    <span>Sort</span>
+    <select name="sort" onchange="this.form.submit()">
+      {% for key, label in [("recent", "Newest first"), ("title", "Title A–Z"), ("author", "Author A–Z"), ("stars", "Most stars"), ("genre", "Genre")] %}
+      <option value="{{ key }}" {% if sort == key %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% if genres %}
+  <label class="bk-field">
+    <span>Genre</span>
+    <select name="genre" onchange="this.form.submit()">
+      <option value="">All genres</option>
+      {% for gn in genres %}<option value="{{ gn }}" {% if gn == selected_genre %}selected{% endif %}>{{ gn }}</option>{% endfor %}
+    </select>
+  </label>
+  {% endif %}
+  {% if authors %}
+  <label class="bk-field">
+    <span>Author</span>
+    <select name="author" onchange="this.form.submit()">
+      <option value="">All authors</option>
+      {% for a in authors %}<option value="{{ a }}" {% if a == selected_author %}selected{% endif %}>{{ a }}</option>{% endfor %}
+    </select>
+  </label>
+  {% endif %}
+  <noscript><button class="jelly-btn" type="submit">Go</button></noscript>
+</form>
+
+{% if books %}
+<div class="bk-shelf-head">
+  <p class="bk-count">Showing {{ books|length }} of {{ total_count }} book{{ "" if total_count == 1 else "s" }}
+    {% if query or selected_genre or selected_author %}· <a href="{{ url_for('bookshelf.shelf', status=active_status) }}">clear filters</a>{% endif %}</p>
+  <button type="button" class="bk-tidy-btn" id="tidy-toggle" aria-pressed="false">🧹 Tidy my shelf</button>
+</div>
+
+<div class="bk-grid" id="book-grid">
+  {% for book in books %}
+  <div class="bk-card" id="book-{{ loop.index0 }}">
+    <label class="bk-select" title="Select {{ book.title }}">
+      <input type="checkbox" class="book-select" data-id="{{ book.id }}" aria-label="Select {{ book.title }}">
+    </label>
+    <a class="bk-card-link" href="{{ url_for('bookshelf.book', book_id=book.id) }}">
+      {% include "bookshelf/_cover.html" %}
+      <span class="bk-status bk-status-{{ book.status }}">{{ status_labels[book.status] }}</span>
+      <p class="bk-title">{{ book.title }}</p>
+      <p class="bk-author">{{ book.author }}</p>
+      <p class="bk-meta">
+        {% if book.average_stars %}<span class="bk-stars" aria-label="{{ book.average_stars }} stars">{{ "★" * (book.average_stars|round|int) }}</span>{% endif %}
+        {% if book.times_read > 1 %}<span class="bk-reread">read ×{{ book.times_read }}</span>{% endif %}
+      </p>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+
+{% if has_more %}
+<div class="bk-more">
+  <a class="jelly-btn btn-quiet" href="{{ url_for('bookshelf.shelf', status=active_status, page=page + 1, **keep) }}#book-{{ books|length }}">Show more books</a>
+</div>
+{% endif %}
+
+<form method="post" action="{{ url_for('bookshelf.delete_many') }}" id="bulk-delete-form"></form>
+<div class="bk-bulk-bar" id="bulk-bar" hidden>
+  <span id="bulk-count">0 selected</span>
+  <button type="button" class="jelly-btn bk-danger" id="bulk-delete-btn">🗑 Take off my shelf</button>
+</div>
+
+{% else %}
+<div class="bk-empty">
+  {% if counts.all %}
+  <p class="bk-empty-big">🔍</p>
+  <h2>No books match</h2>
+  <p>Try a different search, or <a href="{{ url_for('bookshelf.shelf') }}">see all your books</a>.</p>
+  {% else %}
+  <p class="bk-empty-big">📚</p>
+  <h2>Your shelf is empty</h2>
+  <p>Find a book you've read — or one you'd love to read — and pop it on your shelf!</p>
+  <a class="jelly-btn" href="{{ url_for('bookshelf.add_page') }}">＋ Add my first book</a>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='bookshelf.js') }}"></script>
+{% endblock %}
