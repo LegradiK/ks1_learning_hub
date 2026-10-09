@@ -145,6 +145,7 @@ function updateScore() {
 }
 
 function celebrate() {
+  window.hubTrack && hubTrack.win();   // 📊 progress report
   if (best[difficulty] === undefined || flips < best[difficulty]) {
     best[difficulty] = flips;
   }

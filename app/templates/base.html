@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <!-- theme-letters / theme-maths / theme-words set the accent colour per game -->
-<body class="{% block theme %}theme-hub{% endblock %}">
+<body class="{% block theme %}theme-hub{% endblock %}"{% if g.child and current_game %} data-game="{{ current_game }}"{% endif %}>
 
   <nav class="topbar">
     <a class="logo" href="{{ url_for('hub.index') }}">
@@ -71,6 +71,8 @@
       <details class="nav-dropdown">
         <summary class="nav-btn player-btn">👋 {{ g.child.name }}</summary>
         <div class="dropdown-menu">
+          <a class="dropdown-item" href="{{ url_for('hub.progress') }}">📊 My progress</a>
+          <hr class="dropdown-divider">
           <form method="post" action="{{ url_for('auth.logout') }}">
             <button class="dropdown-item" type="submit">🚪 Log out</button>
           </form>
@@ -422,6 +424,7 @@
       refresh();
     })();
   </script>
+  <script src="{{ url_for('static', filename='track.js') }}"></script>
   {% endif %}
   {% block scripts %}{% endblock %}
 

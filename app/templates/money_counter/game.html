@@ -96,6 +96,7 @@ let q = null;
 let purse = [];   // values currently in the purse (make mode)
 
 function recordResult(correct) {
+  window.hubTrack && hubTrack.answer(correct);   // 📊 progress report
   if (correct) { tally.right++; tally.streak++; }
   else         { tally.wrong++; tally.streak = 0; }
   document.getElementById('cc-right').textContent  = tally.right;

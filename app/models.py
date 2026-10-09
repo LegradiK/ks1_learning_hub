@@ -73,3 +73,26 @@ class GameProgress(db.Model):
     game = db.Column(db.String(40), nullable=False)
     data = db.Column(db.JSON, nullable=False, default=dict)
     updated_at = db.Column(db.DateTime, default=_now, onupdate=_now, nullable=False)
+
+
+class StudyLog(db.Model):
+    """How much a child played each game on each day (UK date).
+
+    One row per child, per game, per day. `seconds` is active time on the
+    game page (tab visible and touched in the last 90s); right/wrong count
+    answered questions; wins counts finished puzzles (crossword, sudoku...).
+    """
+    __tablename__ = "study_log"
+    __table_args__ = (db.UniqueConstraint("child_id", "game", "day"),)
+
+    id = db.Column(db.Integer, primary_key=True)
+    child_id = db.Column(db.Integer, db.ForeignKey("children.id"), nullable=False, index=True)
+    game = db.Column(db.String(40), nullable=False)       # blueprint name, e.g. "math_drill"
+    day = db.Column(db.Date, nullable=False)
+    seconds = db.Column(db.Integer, default=0, nullable=False)
+    right = db.Column(db.Integer, default=0, nullable=False)
+    wrong = db.Column(db.Integer, default=0, nullable=False)
+    wins = db.Column(db.Integer, default=0, nullable=False)
+
+    child = db.relationship("Child", backref=db.backref(
+        "study_logs", cascade="all, delete-orphan", lazy=True))

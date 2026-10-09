@@ -2012,3 +2012,168 @@ a.about:hover {
 /* ---------- topbar: who's playing + voices ---------- */
 .nav-menus form { margin: 0; }
 .puter-btn { background: var(--bad-soft); border-color: var(--bad); }
+
+/* ============================================================
+   PROGRESS REPORT — 📊 My progress (player menu)
+   ============================================================ */
+.dropdown-divider {
+  border: none;
+  border-top: 2px dashed var(--line);
+  margin: 0.2rem 0.4rem;
+}
+
+.pr-hero { padding-bottom: 1rem; }
+
+.pr-ranges {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+.pr-range {
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 3px solid var(--line);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 600;
+  text-decoration: none;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.pr-range:hover { border-color: var(--accent); }
+.pr-range.is-on { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.pr-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.9rem;
+  margin-bottom: 1.25rem;
+}
+.pr-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.15rem;
+  padding: 1rem 0.6rem;
+  background: var(--panel);
+  border: 3px solid var(--accent-soft);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.pr-tile-icon { font-size: 1.7rem; }
+.pr-tile-val {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+.pr-tile-val small { font-size: 0.6em; color: var(--ink-soft); }
+.pr-tile-lbl { font-size: 0.9rem; color: var(--ink-soft); }
+
+.pr-card {
+  background: var(--panel);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.25rem 1.4rem;
+  margin-bottom: 1.25rem;
+}
+.pr-card h2 { font-size: 1.4rem; margin-bottom: 0.8rem; }
+
+/* this week: 7 little columns */
+.pr-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem;
+  align-items: end;
+}
+.pr-day { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+.pr-day-min {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  min-height: 1.2em;
+}
+.pr-day-track {
+  width: 100%;
+  max-width: 54px;
+  height: 120px;
+  display: flex;
+  align-items: flex-end;
+  background: var(--bg);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.pr-day-bar {
+  width: 100%;
+  background: var(--accent);
+  border-radius: 12px 12px 0 0;
+  opacity: 0.55;
+}
+.pr-day.is-today .pr-day-bar { opacity: 1; }
+.pr-day-lbl { font-size: 0.9rem; color: var(--ink-soft); }
+.pr-day.is-today .pr-day-lbl { color: var(--ink); font-weight: 800; }
+
+.pr-note { margin: 0.6rem 0 0; font-size: 0.9rem; color: var(--ink-soft); text-align: center; }
+.pr-foot { margin-top: 0.5rem; }
+
+/* games list */
+.pr-group-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.pr-group-time { font-family: var(--font-display); color: var(--ink-soft); }
+
+.pr-games { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.pr-game {
+  display: flex;
+  gap: 0.9rem;
+  align-items: center;
+  padding: 0.75rem 0.9rem;
+  border: 3px solid var(--accent-soft);
+  border-radius: var(--radius-sm);
+}
+.pr-game.is-new { border-style: dashed; border-color: var(--line); }
+.pr-game-badge {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  font-size: 1.6rem;
+  background: var(--accent-soft);
+  border-radius: 30% 70% 65% 35% / 55% 40% 60% 45%;
+}
+.pr-game-badge img { width: 1.6rem; height: 1.6rem; }
+.pr-game.is-new .pr-game-badge { filter: grayscale(0.6); opacity: 0.7; }
+.pr-game-main { flex: 1; min-width: 0; }
+.pr-game-top { display: flex; justify-content: space-between; align-items: baseline; gap: 0.6rem; }
+.pr-game-name {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+}
+.pr-game-name:hover { text-decoration: underline; }
+.pr-game-time { font-family: var(--font-display); font-weight: 700; white-space: nowrap; }
+
+.pr-bar { height: 12px; background: var(--bg); border-radius: 999px; margin: 0.4rem 0 0.5rem; overflow: hidden; }
+.pr-bar-fill { height: 100%; background: var(--accent); border-radius: 999px; }
+
+.pr-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.pr-chip {
+  font-size: 0.88rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+}
+.pr-chip-soft { background: var(--bg); color: var(--ink-soft); }
+.pr-empty { margin: 0.2rem 0 0; font-size: 0.95rem; color: var(--ink-soft); }
+.pr-empty a { color: var(--ink); }
+
+@media (max-width: 720px) {
+  .pr-tiles { grid-template-columns: repeat(2, 1fr); }
+  .pr-day-track { height: 90px; }
+  .pr-card { padding: 1rem; }
+}

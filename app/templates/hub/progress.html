@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}KS1 Learning Hub — {{ g.child.name }}'s progress{% endblock %}
+{% block theme %}theme-hub{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{{ url_for('hub.index') }}">← Back</a>
+
+<header class="hub-hero pr-hero">
+  <h1>📊 {{ g.child.name }}'s progress</h1>
+  <p class="hub-sub">How much you've practised in each game</p>
+</header>
+
+<nav class="pr-ranges" aria-label="Time period">
+  {% for key, (label, _) in r.ranges.items() %}
+  <a class="pr-range {% if key == r.range_key %}is-on{% endif %}"
+     href="{{ url_for('hub.progress', range=key) }}"
+     {% if key == r.range_key %}aria-current="page"{% endif %}>{{ label }}</a>
+  {% endfor %}
+</nav>
+
+{# ── headline numbers ── #}
+<section class="pr-tiles">
+  <div class="pr-tile">
+    <span class="pr-tile-icon">⏱️</span>
+    <span class="pr-tile-val">{{ nice_time(r.total_seconds) if r.total_seconds else "0 min" }}</span>
+    <span class="pr-tile-lbl">time learning</span>
+  </div>
+  <div class="pr-tile">
+    <span class="pr-tile-icon">📅</span>
+    <span class="pr-tile-val">{{ r.total_days }}</span>
+    <span class="pr-tile-lbl">day{{ "" if r.total_days == 1 else "s" }} played</span>
+  </div>
+  <div class="pr-tile">
+    <span class="pr-tile-icon">✅</span>
+    <span class="pr-tile-val">{{ r.right }}{% if r.answered %}<small> / {{ r.answered }}</small>{% endif %}</span>
+    <span class="pr-tile-lbl">answers right{% if r.accuracy is not none %} · {{ r.accuracy }}%{% endif %}</span>
+  </div>
+  <div class="pr-tile">
+    <span class="pr-tile-icon">🏆</span>
+    <span class="pr-tile-val">{{ r.wins }}</span>
+    <span class="pr-tile-lbl">puzzle{{ "" if r.wins == 1 else "s" }} finished</span>
+  </div>
+</section>
+
+{# ── the last 7 days ── #}
+<section class="pr-card">
+  <h2>This week</h2>
+  <div class="pr-week" role="img"
+       aria-label="Minutes learning each day: {% for d in r.daily %}{{ d.day.strftime('%A') }} {{ nice_time(d.seconds) if d.seconds else 'none' }}{{ ', ' if not loop.last }}{% endfor %}">
+    {% for d in r.daily %}
+    <div class="pr-day {% if d.is_today %}is-today{% endif %}">
+      <span class="pr-day-min">{{ (d.seconds / 60)|round|int if d.seconds >= 30 else ("·" if d.seconds else "") }}</span>
+      <div class="pr-day-track"><div class="pr-day-bar" style="height: {{ [d.bar, 4 if d.seconds else 0]|max }}%"></div></div>
+      <span class="pr-day-lbl">{{ "Today" if d.is_today else d.label }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  <p class="pr-note">Minutes each day</p>
+</section>
+
+{# ── every game, by subject ── #}
+{% for grp in r.groups %}
+<section class="pr-card">
+  <div class="pr-group-head">
+    <h2>{{ grp.badge }} {{ grp.name }}</h2>
+    <span class="pr-group-time">{{ nice_time(grp.seconds) if grp.seconds else "" }}</span>
+  </div>
+
+  <ul class="pr-games">
+    {% for gm in grp.games %}
+    {% set item = gm.activity %}
+    <li class="pr-game {{ item.theme }} {% if not gm.days %}is-new{% endif %}">
+      <span class="pr-game-badge">
+        {%- if item.badge_img -%}
+          <img src="{{ url_for('static', filename=item.badge_img) }}" alt="">
+        {%- else -%}{{ item.badge }}{%- endif -%}
+      </span>
+
+      <div class="pr-game-main">
+        <div class="pr-game-top">
+          <a class="pr-game-name" href="{{ url_for(item.endpoint) }}">{{ item.name }}</a>
+          <span class="pr-game-time">{{ nice_time(gm.seconds) if gm.days else "" }}</span>
+        </div>
+
+        {% if gm.days %}
+        <div class="pr-bar"><div class="pr-bar-fill" style="width: {{ [gm.bar, 3]|max }}%"></div></div>
+        <div class="pr-chips">
+          {% if gm.answered %}
+          <span class="pr-chip">✅ {{ gm.right }} of {{ gm.answered }} right ({{ gm.accuracy }}%)</span>
+          {% endif %}
+          {% if gm.wins %}
+          <span class="pr-chip">🏆 {{ gm.wins }} finished</span>
+          {% endif %}
+          <span class="pr-chip pr-chip-soft">📅 {{ gm.days }} day{{ "" if gm.days == 1 else "s" }} · last {{ gm.last_label }}</span>
+        </div>
+        {% else %}
+        <p class="pr-empty">Not tried yet — <a href="{{ url_for(item.endpoint) }}">have a go!</a></p>
+        {% endif %}
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endfor %}
+
+<p class="pr-note pr-foot">Time counts while a game is open and being played — it pauses after a minute and a half without a tap.</p>
+{% endblock %}

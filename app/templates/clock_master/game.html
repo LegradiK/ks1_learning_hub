@@ -91,6 +91,7 @@ const SNAP = { oclock: [0], half: [0, 30], quarter: [0, 15, 30, 45],
                five: Array.from({length: 12}, (_, i) => i * 5) };
 
 function recordResult(correct) {
+  window.hubTrack && hubTrack.answer(correct);   // 📊 progress report
   if (correct) { tally.right++; tally.streak++; }
   else         { tally.wrong++; tally.streak = 0; }
   document.getElementById('cm-right').textContent  = tally.right;

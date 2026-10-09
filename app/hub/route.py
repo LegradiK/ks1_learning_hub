@@ -1,4 +1,4 @@
-from flask import abort, render_template
+from flask import abort, g, render_template, request
 
 from app.hub import bp
 from app.hub.activities import (
@@ -36,3 +36,24 @@ def group(slug):
 @bp.route("/about")
 def about():
     return render_template("hub/about.html")
+
+
+@bp.route("/progress")
+def progress():
+    """Progress report: how much the logged-in child played each game."""
+    from app.study import report
+    return render_template("hub/progress.html",
+                           r=report(g.child, request.args.get("range", "week")))
+
+
+@bp.route("/api/track", methods=["POST"])
+def track():
+    """Time and answers sent from static/track.js."""
+    from app.study import record
+    data = request.get_json(silent=True) or {}
+    try:
+        seconds = int(data.get("seconds") or 0)
+    except (TypeError, ValueError):
+        seconds = 0
+    ok = record(str(data.get("game", "")), seconds, data.get("result"))
+    return {"ok": ok}

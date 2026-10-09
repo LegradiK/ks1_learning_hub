@@ -258,6 +258,7 @@
     $("sm-reveal").hidden = false;
     renderSentence(item, item.word, result.correct ? "right" : "wrong");
 
+    window.hubTrack && hubTrack.answer(result.correct);   // 📊 progress report
     const fb = $("sm-feedback");
     if (result.correct) {
       roundRight++; totalRight++; streak++;

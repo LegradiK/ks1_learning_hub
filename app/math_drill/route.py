@@ -9,6 +9,7 @@ default if the current one doesn't exist there (e.g. addition's
 from flask import render_template, request, redirect, url_for, session, flash
 
 from app.math_drill import bp
+from app.study import record
 from app.math_drill.game_logic import (
     new_question, levels_for, default_level, CALC_TYPES, STYLES,
 )
@@ -73,6 +74,7 @@ def check_answer():
     else:
         session["md_wrong"] += 1
         session["md_streak"] = 0
+    record("math_drill", result="right" if is_correct else "wrong")
 
     session["md_feedback"] = {
         "correct": is_correct,

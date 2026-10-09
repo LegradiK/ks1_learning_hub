@@ -315,6 +315,7 @@ function checkBoard() {
   });
 
   if (allRight) {
+    window.hubTrack && hubTrack.win();   // 📊 progress report
     solvedCount++;
     document.getElementById('sd-solved').textContent = solvedCount;
     document.getElementById('sd-feedback').className = 'feedback';

@@ -95,6 +95,7 @@ let firstLoad = true;   // don't auto-speak before the first user gesture
                         // (browsers block audio until the page is clicked)
 
 function recordResult(correct) {
+  window.hubTrack && hubTrack.answer(correct);   // 📊 progress report
   if (correct) { tally.right++; tally.streak++; }
   else         { tally.wrong++; tally.streak = 0; }
   document.getElementById('ss-right').textContent  = tally.right;

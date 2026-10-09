@@ -61,6 +61,7 @@ let puzzle = null;
 let activeKey = null;
 let checks = 0;
 let solved = new Set();
+let winLogged = false;   // 📊 count each finished crossword once (not after Reveal)
 let currentMode = {{ initial_mode | tojson }};
 
 function setMode(mode) {
@@ -89,7 +90,7 @@ async function loadPuzzle() {
   document.getElementById('loading').style.display = 'block';
   document.getElementById('main').style.display = 'none';
   document.getElementById('win-banner').style.display = 'none';
-  solved.clear(); checks = 0;
+  solved.clear(); checks = 0; winLogged = false;
   updateScore(0, 0);
 
   const topic = sel.value;
@@ -292,10 +293,14 @@ function checkAll() {
     }
   });
   updateScore(solved.size, puzzle.across.length + puzzle.down.length);
-  if (solved.size === puzzle.across.length + puzzle.down.length) showWin();
+  if (solved.size === puzzle.across.length + puzzle.down.length) {
+    if (!winLogged) { winLogged = true; window.hubTrack && hubTrack.win(); }   // 📊
+    showWin();
+  }
 }
 
 function revealAll() {
+  winLogged = true;   // revealed puzzles don't count as solved
   [...puzzle.across, ...puzzle.down].forEach(cl => {
     const dr=cl.dir==='D'?1:0, dc=cl.dir==='A'?1:0;
     for (let i=0;i<cl.length;i++) {
@@ -314,7 +319,7 @@ function clearAll() {
   document.querySelectorAll('.cinp').forEach(i=>i.value='');
   document.querySelectorAll('table#cw td:not(.black)').forEach(td=>td.classList.remove('hi','ok','err'));
   document.querySelectorAll('.clue-item').forEach(c=>c.classList.remove('active','done'));
-  solved.clear(); activeKey=null; checks=0;
+  solved.clear(); activeKey=null; checks=0; winLogged=false;
   updateScore(0, puzzle.across.length+puzzle.down.length);
   document.getElementById('win-banner').style.display='none';
 }

@@ -5,6 +5,7 @@ const usedWords = { stage1: {}, stage2: {}, stage3: {}, stage4: {} };
 const tally = { right: 0, wrong: 0, streak: 0 };
 
 function recordResult(correct) {
+    window.hubTrack && hubTrack.answer(correct);   // 📊 progress report
     if (correct) { tally.right++; tally.streak++; }
     else         { tally.wrong++; tally.streak = 0; }
     document.getElementById('ww-right').textContent  = tally.right;

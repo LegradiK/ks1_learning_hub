@@ -305,6 +305,7 @@ async function postCheck(sheet, attemptValue) {
 }
 
 function finish(result) {
+  window.hubTrack && hubTrack.win();   // 📊 progress report
   locked = locked.map(() => true);
   starsEarned.textContent = "★".repeat(result.stars) + "☆".repeat(3 - result.stars);
   completedStory.textContent = result.full_text;
