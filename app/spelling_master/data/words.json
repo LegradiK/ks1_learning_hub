@@ -60,6 +60,21 @@
         {"word": "the",     "sentence": "The dog is barking."},
         {"word": "into",    "sentence": "The frog jumped into the pond."}
       ]
+    },
+    {
+      "week": 5,
+      "words": [
+        {"word": "wrist",   "sentence": "I wear my watch on my wrist."},
+        {"word": "little",  "sentence": "The little cat is asleep."},
+        {"word": "school",  "sentence": "I walk to school with my mum."},
+        {"word": "thumb",   "sentence": "I hurt my thumb on the door."},
+        {"word": "lorry",   "sentence": "The big lorry is on the road."},
+        {"word": "wheel",   "sentence": "The wheel on my bike is broken."},
+        {"word": "wiggle",  "sentence": "Can you wiggle your toes?"},
+        {"word": "thunder", "sentence": "The thunder was very loud."},
+        {"word": "he",      "sentence": "He likes to play football."},
+        {"word": "she",     "sentence": "She has a red hat."}
+      ]
     }
   ]
 }
