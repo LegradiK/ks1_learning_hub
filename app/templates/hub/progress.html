@@ -72,10 +72,10 @@
   </div>
   {% set rd = r.reading %}
   <div class="pr-chips">
-    <span class="pr-chip">📕 {{ rd.count }} book{{ "" if rd.count == 1 else "s" }} read{% if rd.readings > rd.count %} ({{ rd.readings }} readings){% endif %}</span>
+   <span class="pr-chip">📕 {{ rd.count }} book{{ "" if rd.count == 1 else "s" }} read{% if rd.readings > rd.count %} ({{ rd.readings - rd.count }} reread{{ "" if rd.readings - rd.count == 1 else "s" }}){% endif %}</span>
     {% if rd.avg_stars %}<span class="pr-chip">⭐ {{ rd.avg_stars }} stars on average</span>{% endif %}
     {% if rd.reviews %}<span class="pr-chip">✏️ {{ rd.reviews }} review{{ "" if rd.reviews == 1 else "s" }} written</span>{% endif %}
-    <span class="pr-chip pr-chip-soft">📖 {{ rd.reading_now }} reading now · {{ rd.on_shelf }} on the shelf</span>
+    <span class="pr-chip pr-chip-soft">📖 {{ rd.reading_now }} reading now</span>
   </div>
   {% if rd.books %}
   <ul class="pr-reads">

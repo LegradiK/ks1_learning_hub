@@ -34,6 +34,27 @@ RESULTS = {"right", "wrong", "win"}
 def today_uk():
     return datetime.now(UK).date() if UK else date.today()
 
+def _reading(child, since):
+    """Books section of the progress page. since=None means all time."""
+    from app.models import Book
+
+    mine = Book.query.filter_by(child_id=child.id)
+
+    read_q = mine.filter(Book.status == "finished")
+    if since:
+        read_q = read_q.filter(db.func.coalesce(Book.finished_on, Book.added_on) > since)
+    books = read_q.order_by(Book.finished_on.desc()).all()
+
+    return dict(
+        count=len(books),
+        readings=sum(b.times_read or 1 for b in books),
+        avg_stars=None,     # TODO: from the review model
+        reviews=0,          # TODO: from the review model
+        reading_now=mine.filter(Book.status == "reading").count(),
+        on_shelf=mine.count,
+        books=books,
+    )
+
 
 def _row(game, day):
     row = StudyLog.query.filter_by(child_id=g.child.id, game=game, day=day).first()
@@ -149,6 +170,7 @@ def report(child, range_key="week"):
         right=right, answered=answered,
         accuracy=round(100 * right / answered) if answered else None,
         wins=sum(gm["wins"] for gm in games),
+        reading=_reading(child, today - timedelta(days=days) if days else None)
     )
 
 

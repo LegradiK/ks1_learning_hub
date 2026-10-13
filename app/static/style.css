@@ -7,6 +7,7 @@
 /* ---------- tokens ---------- */
 :root {
   --bg: #FDF8EF;            /* warm paper */
+  --bg-semi-dark:#f7d088; 
   --panel: #FFFFFF;
   --ink: #3A2E4F;           /* deep plum — softer than black */
   --ink-soft: #7A6F92;
@@ -2175,7 +2176,7 @@ a.about:hover {
   border-radius: 999px;
   background: var(--accent-soft);
 }
-.pr-chip-soft { background: var(--bg); color: var(--ink-soft); }
+.pr-chip-soft { background: var(--bg-semi-dark); color: var(--ink); }
 .pr-empty { margin: 0.2rem 0 0; font-size: 0.95rem; color: var(--ink-soft); }
 .pr-empty a { color: var(--ink); }
 
