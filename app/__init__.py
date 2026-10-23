@@ -55,7 +55,7 @@ def create_app(test_config=None):
     from app.phonics_fox import bp as phonics_fox_bp
     from app.story_detective import bp as story_detective_bp
     from app.spelling_master import bp as spelling_master_bp
-    from app.bookshelf.books_api import bp as bookshelf_bp
+    from app.bookshelf import bp as bookshelf_bp
 
     app.register_blueprint(auth_bp)                                   # /login, /logout
     app.register_blueprint(hub_bp)                                    # "/"
