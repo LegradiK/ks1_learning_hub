@@ -13,7 +13,7 @@ from flask import current_app
 
 GOOGLE_BOOKS_LINK = "https://www.googleapis.com/books/v1/volumes"
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 load_dotenv(os.path.join(BASE_DIR, "data.env"))
 
 
