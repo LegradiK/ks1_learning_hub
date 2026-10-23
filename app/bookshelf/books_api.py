@@ -66,8 +66,7 @@ def _extract_isbn(volume_info):
 def _fetch_volume_details(google_books_id):
     """Fetch a single volume by ID — used when bulk-adding from search results."""
     params = {}
-    if _api_key():
-        params["key"] = _api_key()
+    params["key"] = os.environ.get("GOOGLE_BOOKS_API_KEY")
 
     resp = requests.get(f"{GOOGLE_BOOKS_LINK}/{google_books_id}", params=params, timeout=5)
     resp.raise_for_status()
