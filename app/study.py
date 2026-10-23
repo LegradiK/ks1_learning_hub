@@ -51,7 +51,7 @@ def _reading(child, since):
         avg_stars=None,     # TODO: from the review model
         reviews=0,          # TODO: from the review model
         reading_now=mine.filter(Book.status == "reading").count(),
-        on_shelf=mine.count,
+        on_shelf=mine.count(),
         books=books,
     )
 
