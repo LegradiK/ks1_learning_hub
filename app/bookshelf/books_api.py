@@ -17,10 +17,6 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(BASE_DIR, "data.env"))
 
 
-def _api_key():
-    return current_app.config.get("GOOGLE_BOOKS_API_KEY") or os.getenv("GOOGLE_BOOKS_API_KEY")
-
-
 def https_cover(url):
     """Google Books gives http:// cover links; the hub runs on https, so the
     browser would block them as mixed content."""
@@ -40,8 +36,7 @@ def normalize_text(s):
 def search_google_books(q, start=0):
     """Returns (results, total_items) or raises requests.RequestException."""
     params = {"q": q, "maxResults": 40, "startIndex": start}
-    if _api_key():
-        params["key"] = _api_key()
+    params["key"] = os.environ.get("GOOGLE_BOOKS_API_KEY")
     resp = requests.get(GOOGLE_BOOKS_LINK, params=params, timeout=5)
     resp.raise_for_status()
     data = resp.json()
