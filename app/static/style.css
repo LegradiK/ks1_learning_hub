@@ -2808,10 +2808,25 @@ a.about:hover {
   .voice-label,
   .diff-label { font-size: 0.95rem; }
 
-  /* Story Detective toolbar: story picker full width */
-  .toolbar { gap: 0.6rem; }
-  .toolbar label { display: flex; align-items: center; gap: 0.5rem; flex: 1 1 100%; }
-  .toolbar select { flex: 1; min-width: 0; }
+  /* Story Detective toolbar: story picker fits the screen; long titles end in "…" */
+  .theme-detective .toolbar { gap: 0.6rem; }
+
+  .theme-detective .toolbar label {
+    flex: 1 1 100%;
+    min-width: 0;
+    gap: 0.5rem;
+  }
+
+  .theme-detective .toolbar select {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 46px;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.95rem;
+    text-overflow: ellipsis;
+  }
 
   /* Home, Subjects and game lists: compact cards, icon on the left */
   .subject-grid { gap: 0.8rem; }
