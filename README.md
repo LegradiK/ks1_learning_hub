@@ -2,7 +2,7 @@
 
 **Little games for big learning** — a collection of free, curriculum-inspired learning games for children aged 4–7 (Reception to Year 2), built with Flask.
 
-🔗 **Live demo:** [ks1-learning-hub.onrender.com](https://ks1-learning-hub.onrender.com/)
+🔗 **Live demo:** [ks1-learning-hub.onrender.com]([https://ks1-learning-hub.onrender.com/](https://kidslearninggames.pythonanywhere.com/))
 
 <!-- TODO: add a screenshot or short GIF of the hub home page here -->
 
