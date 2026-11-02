@@ -75,6 +75,36 @@
         {"word": "he",      "sentence": "He likes to play football."},
         {"word": "she",     "sentence": "She has a red hat."}
       ]
+    },
+    {
+      "week": 6,
+      "words": [
+        {"word": "powder",   "sentence": "Mum put powder on the baby."},
+        {"word": "huff",     "sentence": "The wolf will huff and puff."},
+        {"word": "hotter",   "sentence": "It is hotter in summer than in winter."},
+        {"word": "shimmer",  "sentence": "The stars shimmer in the night sky."},
+        {"word": "supper",   "sentence": "We had soup for supper."},
+        {"word": "singer",   "sentence": "The singer sang a happy song."},
+        {"word": "freeze",   "sentence": "It was so cold that the pond began to freeze."},
+        {"word": "fizz",     "sentence": "The lemonade began to fizz."},
+        {"word": "we",       "sentence": "We are going to the zoo."},
+        {"word": "be",       "sentence": "Please be kind to your friends."}
+      ]
+    },
+    {
+      "week": 7,
+      "words": [
+        {"word": "which",    "sentence": "Which coat is yours?"},
+        {"word": "quick",    "sentence": "Be quick, or we will miss the bus!"},
+        {"word": "stretch",  "sentence": "Stretch your arms up high."},
+        {"word": "beach",    "sentence": "We built a sandcastle on the beach."},
+        {"word": "cloak",    "sentence": "The wizard wore a long black cloak."},
+        {"word": "magic",    "sentence": "The magician did a magic trick."},
+        {"word": "match",    "sentence": "Can you match the socks?"},
+        {"word": "kitchen",  "sentence": "Dad is cooking in the kitchen."},
+        {"word": "me",       "sentence": "Can you help me, please?"},
+        {"word": "was",      "sentence": "The film was very funny."}
+      ]
     }
   ]
 }

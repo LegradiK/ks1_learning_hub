@@ -82,7 +82,11 @@ def api_puzzle():
     if not topic:
         return jsonify({"error": "no topics available for this mode"}), 404
 
-    puzzle = build_puzzle(bank[topic])
+    # Phones ask for a narrower puzzle (?max_cols=10) so the squares stay big enough to tap
+    max_cols = request.args.get("max_cols", type=int)
+    if max_cols is not None:
+        max_cols = max(8, min(max_cols, 30))
+    puzzle = build_puzzle(bank[topic], max_cols)
     puzzle["mode"]  = mode
     puzzle["topic"] = topic
     return jsonify(puzzle)

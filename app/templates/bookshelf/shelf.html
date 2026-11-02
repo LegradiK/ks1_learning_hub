@@ -11,7 +11,7 @@
   <p class="hub-sub">
     {% if counts.finished %}
       You've finished {{ counts.finished }} book{{ "" if counts.finished == 1 else "s" }}!
-      {% if counts.reading %}Currently reading: {{ counts.reading }} book{{ "" if counts.finished == 1 else "s" }}{% endif %}
+      {% if counts.reading %}Currently reading: {{ counts.reading }} book{{ "" if counts.reading == 1 else "s" }}{% endif %}
     {% else %}
       Every book you read goes on your shelf!
     {% endif %}
@@ -23,13 +23,18 @@
 </header>
 
 {% set keep = dict(sort=sort, genre=selected_genre, author=selected_author, q=query) %}
-<nav class="pr-ranges bk-tabs" aria-label="Which books">
+<div class="bk-tabs-wrap" id="bk-tabs-wrap">
+<nav class="pr-ranges bk-tabs" id="bk-tabs" aria-label="Which books">
   {% for key, label in [("all", "📚 All"), ("reading", "📖 Reading now"), ("finished", "✅ Finished"), ("want_to_read", "💭 Want to read")] %}
   <a class="pr-range {% if active_status == key %}is-on{% endif %}"
      href="{{ url_for('bookshelf.shelf', status=key, **keep) }}"
      {% if active_status == key %}aria-current="page"{% endif %}>{{ label }} <span class="bk-tab-count">{{ counts[key] }}</span></a>
   {% endfor %}
 </nav>
+  {# Phones: an arrow and a little bar show there are more tabs to swipe to #}
+  <span class="bk-tabs-arrow" aria-hidden="true">›</span>
+  <div class="bk-tabs-track" aria-hidden="true"><div class="bk-tabs-thumb" id="bk-tabs-thumb"></div></div>
+</div>
 
 <form method="get" class="bk-filters" id="filter-form">
   <label class="bk-field">

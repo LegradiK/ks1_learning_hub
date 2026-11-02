@@ -1097,6 +1097,238 @@ a.about:hover {
 
 .dropdown-item:hover { background: var(--accent-soft); }
 
+/* ---------- Learning menu: tabs on the left, list on the right ---------- */
+/* Measured from the top bar so the wide panel always stays on screen */
+.topbar { position: relative; }
+.learn-menu { position: static; }
+
+.learn-panel {
+  right: 1.2rem;
+  top: calc(100% - 4px);
+  width: min(640px, calc(100% - 2.4rem));
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.learn-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 0 0 230px;
+  padding: 0.4rem;
+  background: var(--accent-soft);
+}
+
+.learn-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0.6rem 0.9rem;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  text-align: left;
+  color: var(--ink);
+  background: none;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.learn-tab { white-space: nowrap; }
+
+.learn-tab::after {
+  content: "›";
+  margin-left: auto;
+  font-size: 1.3rem;
+  color: var(--ink-soft);
+}
+
+.learn-tab.is-active {
+  background: var(--panel);
+  box-shadow: 0 3px 0 var(--line);
+}
+
+.learn-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  padding: 0.6rem;
+}
+
+.learn-side[hidden] { display: none; }
+
+.learn-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.2rem 0.6rem;
+  align-content: start;
+}
+
+.learn-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0.4rem;
+}
+
+.learn-heading,
+.learn-all {
+  padding: 0.4rem 0.6rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
+  border-radius: 10px;
+}
+
+.learn-all {
+  align-self: flex-start;
+  color: var(--accent);
+}
+
+.learn-heading.is-soon {
+  color: var(--ink-soft);
+  opacity: 0.7;
+}
+
+.learn-heading small {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.learn-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.5rem 0.7rem;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: left;
+  color: var(--ink);
+  text-decoration: none;
+  background: none;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.learn-heading:hover,
+.learn-all:hover,
+.learn-item:hover,
+.learn-tab:hover {
+  background: var(--panel);
+}
+
+.learn-side .learn-heading:hover,
+.learn-side .learn-all:hover,
+.learn-side .learn-item:hover {
+  background: var(--accent-soft);
+}
+
+/* Phones: tabs across the top, the list underneath */
+@media (max-width: 640px) {
+  .learn-panel {
+    left: 0.6rem;
+    right: 0.6rem;
+    width: auto;
+    flex-direction: column;
+  }
+
+  .learn-tabs {
+    flex: none;
+    flex-direction: row;
+  }
+
+  .learn-tab {
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.1rem;
+    padding: 0.5rem 0.3rem;
+    font-size: 0.85rem;
+    text-align: center;
+    white-space: normal;
+  }
+
+  .learn-tab::after { content: none; }
+
+  .learn-side { max-height: 60vh; }
+}
+
+@media (max-width: 380px) {
+  .learn-columns { grid-template-columns: 1fr; }
+}
+
+/* ---------- Phones: ☰ Menu holds About, Learning and Bookshelf ---------- */
+.nav-burger { display: none; }
+
+/* The Learning panel shown flat inside ☰ Menu (not as its own dropdown) */
+.learn-panel--inline {
+  position: static;
+  display: flex;
+  flex-direction: column;
+  width: auto;
+  overflow: visible;
+  border-radius: 10px;
+}
+
+.learn-panel--inline .learn-side { max-height: none; }
+
+.burger-heading {
+  margin: 0.3rem 0.6rem 0.4rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 640px) {
+  .nav-wide { display: none; }
+  .nav-burger { display: block; position: static; }
+
+  /* Menu on the left, speaker and name on the right, all on one row */
+  .nav-menus {
+    width: 100%;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .nav-menus > .puter-btn { margin-left: auto; }
+  .nav-menus > .puter-btn[hidden] + .player-menu { margin-left: auto; }
+
+  .player-menu { min-width: 0; }
+
+  .player-btn {
+    max-width: 100%;
+    white-space: nowrap;
+  }
+
+  .player-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Open full width under the top bar so it never goes off screen */
+  .burger-panel {
+    left: 0.6rem;
+    right: 0.6rem;
+    top: calc(100% - 4px);
+    min-width: 0;
+    max-height: 75vh;
+    overflow-y: auto;
+  }
+}
+
 .howto-page h3 { font-family: var(--font-display); margin: 1rem 0 0.3rem; }
 
 /* ============================================================
@@ -2020,6 +2252,25 @@ a.about:hover {
 /* ---------- topbar: who's playing + voices ---------- */
 .nav-menus form { margin: 0; }
 .puter-btn { background: var(--bad-soft); border-color: var(--bad); }
+.puter-btn.is-on { background: var(--panel); border-color: var(--line); cursor: default; }
+.puter-btn[hidden] { display: none; }   /* .nav-btn's display would otherwise override hidden */
+
+/* Speaker icon: sound waves when voices are on, a line through it when off */
+.speaker-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.speaker-body { fill: currentColor; }
+.puter-btn .speaker-icon--on { display: none; }
+.puter-btn.is-on .speaker-icon--on { display: block; }
+.puter-btn.is-on .speaker-icon--off { display: none; }
+.puter-btn:not(.is-on) { color: var(--bad); }
 
 /* ============================================================
    PROGRESS REPORT — 📊 My progress (player menu)
@@ -2476,3 +2727,365 @@ a.about:hover {
 .pr-read .bk-cover { margin: 0; border-radius: 8px; }
 .pr-read .bk-cover-letter { font-size: 1.8rem; }
 .pr-read-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 700; }
+
+
+/* ============================================================
+   PHONES — make every page fit a small screen
+   (everything below only applies at 640px wide or less,
+   except the Letter Quest rule, which starts at 800px)
+   ============================================================ */
+
+/* Letter Quest: size the squares to the screen; very big puzzles scroll inside their box */
+@media (max-width: 800px) {
+  .grid-wrap {
+    width: 100%;
+    min-width: 0;
+    padding: 0.6rem;
+  }
+
+  table#cw {
+    --cw-cell: clamp(30px, calc((100vw - 3.5rem) / var(--cw-cols, 10) - 4px), 52px);
+    border-spacing: 3px;
+  }
+
+  table#cw td {
+    width: var(--cw-cell);
+    height: var(--cw-cell);
+    min-width: var(--cw-cell);
+    border-width: 2px;
+    border-radius: 6px;
+  }
+
+  .cinp { font-size: calc(var(--cw-cell) * 0.5); }
+  .cnum { font-size: 0.6rem; top: 0; left: 3px; }
+
+  .clues-panel { width: 100%; }
+}
+
+@media (max-width: 640px) {
+  /* Game header: icon beside the title, score boxes in a row underneath */
+  .game-header {
+    gap: 0.6rem 0.8rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .game-header .subject-badge {
+    width: 52px;
+    height: 52px;
+    font-size: 1.6rem;
+    flex-shrink: 0;
+  }
+
+  .game-header > div:not(.score-bar) {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .game-header h1 { font-size: 1.6rem; margin: 0; }
+  .game-sub { font-size: 0.95rem; }
+
+  .game-header .score-bar {
+    flex-basis: 100%;
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+
+  .game-header .sc { flex: 1; padding: 0.3rem 0.4rem; }
+
+  /* Settings rows (Game, Level, Voice…): label on its own line above its buttons */
+  .control-group { gap: 0.4rem; }
+
+  .control-group > .control-label,
+  .control-group > .voice-label,
+  .control-group > .diff-label {
+    flex-basis: 100%;
+    min-width: 0;
+    margin: 0.4rem 0 0 !important;
+  }
+
+  .control-label,
+  .voice-label,
+  .diff-label { font-size: 0.95rem; }
+
+  /* Story Detective toolbar: story picker full width */
+  .toolbar { gap: 0.6rem; }
+  .toolbar label { display: flex; align-items: center; gap: 0.5rem; flex: 1 1 100%; }
+  .toolbar select { flex: 1; min-width: 0; }
+
+  /* Home, Subjects and game lists: compact cards, icon on the left */
+  .subject-grid { gap: 0.8rem; }
+
+  .subject-card,
+  .choice-card {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr);
+    grid-template-areas:
+      "badge title"
+      "badge text"
+      "badge cta";
+    align-items: center;
+    justify-items: start;
+    gap: 0.15rem 1rem;
+    padding: 1rem 1.1rem;
+    text-align: left;
+  }
+
+  .subject-card .subject-badge,
+  .choice-card .subject-badge {
+    grid-area: badge;
+    align-self: center;
+    width: 64px;
+    height: 64px;
+    font-size: 2rem;
+  }
+
+  .subject-card h2,
+  .choice-card h2 { grid-area: title; margin: 0; font-size: 1.3rem; }
+
+  .subject-card p { grid-area: text; font-size: 0.95rem; }
+
+  .subject-card .card-cta,
+  .subject-card .soon-tag {
+    grid-area: cta;
+    margin-top: 0.4rem;
+    min-width: 0;
+    padding: 0.35rem 1.1rem;
+    font-size: 0.95rem;
+  }
+
+  .subject-card:hover { transform: none; }
+
+  /* Sudoku: grid fills the width, number pad in two rows of five */
+  .sudoku-wrap { padding: 0.5rem; max-width: 100%; }
+  .sudoku-layout { gap: 1rem; }
+  .mode-and-num-pad { width: 100%; }
+
+  table#sd-grid { --cell-fit: calc((100vw - 4rem - 24px) / var(--sd-size, 4)); }
+  table#sd-grid td {
+    width: min(var(--cell), var(--cell-fit));
+    height: min(var(--cell), var(--cell-fit));
+  }
+  table#sd-grid td,
+  .sd-inp { font-size: calc(min(var(--cell), var(--cell-fit)) * 0.5); }
+
+  .num-pad {
+    grid-template-columns: repeat(5, 1fr) !important;
+    width: 100%;
+    gap: 0.4rem;
+  }
+
+  .num-btn { height: 56px; font-size: 1.5rem; }
+
+  .num-erase {
+    grid-column: auto;
+    margin-top: 0;
+    font-size: 0.95rem;
+  }
+
+  /* Match Pairs Extra hard: square cards so 32 cards need less scrolling */
+  .mp-extra_hard .mp-inner { aspect-ratio: 1 / 1; }
+
+  /* Pages in general: a little less padding around the edge */
+  .game-panel { padding: 1rem; }
+}
+
+
+.bk-tabs-arrow,
+.bk-tabs-track { display: none; }
+
+/* ============================================================
+   MY BOOKSHELF on phones (640px wide or less)
+   ============================================================ */
+@media (max-width: 640px) {
+  /* ---- Shelf page ---- */
+  .bk-hero { padding: 0.5rem 0 0.8rem; }
+  .bk-hero h1 { font-size: 1.6rem; }
+  .bk-hero .hub-sub { font-size: 1rem; }
+  .bk-actions { margin-top: 0.7rem; gap: 0.6rem; }
+  .bk-actions .jelly-btn { flex: 1; padding: 0.5rem 0.8rem; font-size: 1rem; }
+
+  /* Status tabs: one row you can swipe sideways */
+  .bk-tabs {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    margin: 0 -1rem 0.8rem;
+    padding: 0.2rem 1rem 0.5rem;
+    scrollbar-width: none;
+  }
+
+  .bk-tabs::-webkit-scrollbar { display: none; }
+  .bk-tabs .pr-range { flex-shrink: 0; white-space: nowrap; }
+
+  /* "Swipe for more": arrow on the right edge + a little grey bar underneath */
+  .bk-tabs-wrap.can-scroll { position: relative; margin-bottom: 0.8rem; }
+  .bk-tabs-wrap.can-scroll .bk-tabs { margin-bottom: 0; padding-right: 3rem; }
+
+  .bk-tabs-wrap.can-scroll .bk-tabs-arrow {
+    position: absolute;
+    top: 0;
+    right: -1rem;
+    bottom: 12px;
+    width: 3.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 1rem;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--ink-soft);
+    background: linear-gradient(to right, transparent, var(--bg) 60%);
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+
+  .bk-tabs-wrap.at-end .bk-tabs-arrow { opacity: 0; }
+
+  .bk-tabs-wrap.can-scroll .bk-tabs-track {
+    display: block;
+    position: relative;
+    height: 5px;
+    margin: 0.2rem 0.5rem 0;
+    border-radius: 999px;
+    background: rgba(58, 46, 79, 0.08);
+  }
+
+  .bk-tabs-thumb {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-radius: 999px;
+    background: rgba(58, 46, 79, 0.28);
+  }
+
+  /* Filters: search on top, Sort / Genre / Author in one row underneath */
+  .bk-filters {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+    padding: 0.7rem;
+  }
+
+  .bk-filters .bk-search {
+    grid-column: 1 / -1;
+    order: -1;
+  }
+
+  .bk-filters .bk-field { font-size: 0.8rem; }
+  .bk-filters .bk-field:not(.bk-search) { flex: none; }
+
+  .bk-filters select {
+    width: 100%;
+    min-height: 40px;
+    padding: 0.3rem 0.4rem;
+    font-size: 0.85rem;
+    border-width: 2px;
+  }
+
+  .bk-filters .bk-search input {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .bk-shelf-head { gap: 0.5rem; }
+  .bk-count { font-size: 0.85rem; }
+  .bk-tidy-btn { font-size: 0.85rem; min-height: 36px; padding: 0.2rem 0.7rem; }
+
+  /* Book cards: three across */
+  .bk-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .bk-card { padding: 0.4rem; border-width: 2px; }
+  .bk-card:hover { transform: none; }
+  .bk-cover { margin-bottom: 0.3rem; border-radius: 8px; }
+  .bk-cover-letter { font-size: 2rem; }
+  .bk-status { font-size: 0.65rem; padding: 0.05rem 0.4rem; }
+  .bk-title { font-size: 0.82rem; line-height: 1.2; }
+  .bk-author { font-size: 0.72rem; }
+  .bk-meta { font-size: 0.72rem; gap: 0.3rem; }
+  .bk-select input { width: 22px; height: 22px; }
+
+  /* ---- Find a book page: results two across so the Add button fits ---- */
+  .bk-search-input { box-sizing: border-box; font-size: 1.1rem; }
+  .bk-results { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bk-results .bk-add-btn { width: 100%; font-size: 0.9rem; padding: 0.4rem; }
+  .bk-status-pick { gap: 0.4rem; }
+  .bk-status-pick label > span { min-height: 42px; padding: 0.3rem 0.8rem; font-size: 0.95rem; }
+
+  /* ---- One book: small cover beside the title, status buttons in a row ---- */
+  .bk-detail {
+    grid-template-columns: 104px minmax(0, 1fr);
+    gap: 0.4rem 1rem;
+  }
+
+  .bk-detail-side,
+  .bk-detail-main { display: contents; }
+
+  .bk-detail .bk-cover-big {
+    grid-column: 1;
+    grid-row: 1 / span 3;
+    align-self: start;
+    max-width: none;
+    margin: 0;
+    border-radius: 10px;
+  }
+
+  .bk-detail-title {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 0;
+    font-size: 1.4rem;
+    line-height: 1.2;
+  }
+
+  .bk-detail-author {
+    grid-column: 2;
+    grid-row: 2;
+    margin: 0;
+    font-size: 1rem;
+  }
+
+  .bk-facts {
+    grid-column: 2;
+    grid-row: 3;
+    align-self: start;
+    margin: 0.2rem 0 0;
+  }
+
+  .bk-facts .bk-fact { font-size: 0.85rem; padding: 0.3rem 0.6rem; gap: 0.3rem; }
+  .bk-times label { white-space: nowrap; }
+  .bk-times input { width: 2.6rem; padding: 0.1rem; }
+
+  .bk-detail > * > :not(.bk-cover-big):not(.bk-detail-title):not(.bk-detail-author):not(.bk-facts) {
+    grid-column: 1 / -1;
+  }
+
+  .bk-status-col {
+    flex-direction: row;
+    gap: 0.4rem;
+    margin: 0.6rem 0 0.2rem;
+  }
+
+  .bk-status-col .bk-label { display: none; }
+  .bk-status-col label { flex: 1; }
+
+  .bk-status-col label > span {
+    min-height: 44px;
+    padding: 0.3rem 0.4rem;
+    font-size: 0.82rem;
+    text-align: center;
+    line-height: 1.15;
+  }
+
+  .bk-genres { margin: 0.4rem 0 0.6rem; }
+
+  /* ---- Awards: three across ---- */
+  .bk-awards { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
+  .bk-award { padding: 0.6rem 0.3rem; }
+  .bk-award-icon { font-size: 1.5rem; }
+  .bk-award-num { font-size: 1.3rem; }
+  .bk-award-lbl { font-size: 0.75rem; }
+}

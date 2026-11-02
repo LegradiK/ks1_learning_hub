@@ -35,8 +35,17 @@ MAX_HISTORY_WORDS = 500  # guard against oversized / tampered client data
 #     ]}
 # A word can also be a plain string ("bright") if you don't want a sentence.
 
-@lru_cache(maxsize=1)
 def load_weeks():
+    """{week number: [{"word", "sentence"}, ...]} from words.json.
+
+    The file is read again whenever it changes, so a new week shows up
+    as soon as the updated words.json is on the server — no restart needed.
+    """
+    return _load_weeks(DATA_FILE.stat().st_mtime_ns)
+
+
+@lru_cache(maxsize=1)
+def _load_weeks(_file_version):
     """{week number: [{"word", "sentence"}, ...]} from words.json, tidied up.
 
     Blank words and stray spaces are ignored, and weeks with no words are

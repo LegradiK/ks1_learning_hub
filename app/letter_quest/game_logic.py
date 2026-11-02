@@ -68,14 +68,27 @@ def _count_crossings(grid, word, row, col, direction):
 
 # ── Puzzle generation ─────────────────────────────────────────────────────────
 
-def _generate(words):
+def _too_wide(placed, word, col, direction, max_cols):
+    """True if adding this word would make the puzzle wider than max_cols."""
+    if not max_cols:
+        return False
+    starts = [c for _, _, _, c, _ in placed] + [col]
+    ends = [c + (len(w) if d == "A" else 1) - 1 for w, _, _, c, d in placed]
+    ends.append(col + (len(word) if direction == "A" else 1) - 1)
+    return max(ends) - min(starts) + 1 > max_cols
+
+
+def _generate(words, max_cols=None):
     """
     Place words on the grid and return (grid, placed).
     placed is a list of (word, clue, row, col, direction) tuples.
+    max_cols (optional) keeps the finished puzzle narrow enough for a phone.
     """
     grid   = _make_grid()
     placed = []
     pool   = list(words)
+    if max_cols:
+        pool = [(w, c) for w, c in pool if len(w) <= max_cols]
     random.shuffle(pool)
 
     # Place the first word across the centre
@@ -108,6 +121,8 @@ def _generate(words):
                     if nr < 0 or nc < 0:
                         continue
                     if not _can_place(grid, word, nr, nc, alt_dir):
+                        continue
+                    if _too_wide(placed, word, nc, alt_dir, max_cols):
                         continue
 
                     score = _count_crossings(grid, word, nr, nc, alt_dir)
@@ -151,7 +166,7 @@ def _number_starts(placed):
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
-def build_puzzle(words):
+def build_puzzle(words, max_cols=None):
     """
     Generate a crossword from a list of (word, clue) tuples.
 
@@ -164,9 +179,12 @@ def build_puzzle(words):
         }
     """
     # Retry up to 10 times to get a puzzle with at least 5 words placed
-    grid, placed = _generate(words), None
+    # (keeping the attempt that placed the most words, in case none reach 5)
+    grid, placed = None, []
     for _ in range(10):
-        grid, placed = _generate(words)
+        g, p = _generate(words, max_cols)
+        if len(p) > len(placed):
+            grid, placed = g, p
         if len(placed) >= 5:
             break
 

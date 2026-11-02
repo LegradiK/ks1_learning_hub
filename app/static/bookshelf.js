@@ -228,3 +228,34 @@ function initGenreLookup() {
 initFinder();
 initTidy();
 initGenreLookup();
+
+// Shelf tabs on phones: move the little grey bar as the tabs scroll,
+// and hide the › arrow once you reach the end (or if everything already fits).
+(() => {
+  const wrap = document.getElementById('bk-tabs-wrap');
+  const tabs = document.getElementById('bk-tabs');
+  const thumb = document.getElementById('bk-tabs-thumb');
+  if (!wrap || !tabs || !thumb) return;
+
+  const update = () => {
+    const visible = tabs.clientWidth;
+    const total = tabs.scrollWidth;
+    const scrollable = total - visible > 2;
+    wrap.classList.toggle('can-scroll', scrollable);
+    wrap.classList.toggle('at-end', tabs.scrollLeft + visible >= total - 4);
+    if (!scrollable) return;
+    thumb.style.width = (visible / total * 100) + '%';
+    thumb.style.left = (tabs.scrollLeft / total * 100) + '%';
+  };
+
+  tabs.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  update();
+
+  // Start with the chosen tab in view
+  const current = tabs.querySelector('[aria-current="page"]');
+  if (current && current.offsetLeft + current.offsetWidth > tabs.clientWidth) {
+    tabs.scrollLeft = current.offsetLeft - 16;
+    update();
+  }
+})();

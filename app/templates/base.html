@@ -19,7 +19,7 @@
     </a>
 
     <div class="nav-menus">
-      <a class="nav-btn about-btn" href="{{ url_for('hub.about') }}">ℹ️ About</a>
+      <a class="nav-btn about-btn{% if g.child %} nav-wide{% endif %}" href="{{ url_for('hub.about') }}">ℹ️ About</a>
 
       {% if g.child %}
       {# Menus are built from app/hub/activities.py (see the context processor in app/hub/__init__.py) #}
@@ -29,49 +29,88 @@
         {%- else -%}{{ item.badge }}{%- endif -%}
       {%- endmacro %}
 
-      <details class="nav-dropdown">
-        <summary class="nav-btn">📚 School Subjects</summary>
-        <div class="dropdown-menu">
-          <a class="dropdown-item dropdown-all" href="{{ url_for('hub.subjects') }}">All subjects →</a>
-          {% for subject in nav_subjects %}
-            {% if subject.count %}
-            <a class="dropdown-heading" href="{{ url_for('hub.group', slug=subject.slug) }}">{{ icon(subject) }} {{ subject.name }}</a>
-              {% for game in nav_activities if game.group == subject.slug %}
-              <a class="dropdown-item dropdown-sub" href="{{ url_for(game.endpoint) }}">{{ icon(game) }} {{ game.name }}</a>
+      {# Learning panel: School Subjects / Brain Games / How to play on the left,
+         the matching list on the right (tabs across the top on phones).
+         Used twice: in the Learning dropdown, and inside ☰ Menu on phones. #}
+      {% macro learning_panel(prefix, extra_class) %}
+        <div class="{{ extra_class }} learn-panel">
+          <div class="learn-tabs" role="tablist" aria-label="Learning">
+            <button type="button" class="learn-tab is-active" role="tab" aria-selected="true" aria-controls="{{ prefix }}learn-subjects">📚 School Subjects</button>
+            <button type="button" class="learn-tab" role="tab" aria-selected="false" aria-controls="{{ prefix }}learn-brain">🎲 Brain Games</button>
+            <button type="button" class="learn-tab" role="tab" aria-selected="false" aria-controls="{{ prefix }}learn-howto">❓ How to play</button>
+          </div>
+
+          <div class="learn-side" id="{{ prefix }}learn-subjects" role="tabpanel">
+            <a class="learn-all" href="{{ url_for('hub.subjects') }}">All subjects →</a>
+            <div class="learn-columns">
+              {% for subject in nav_subjects %}
+                <div class="learn-group">
+                  {% if subject.count %}
+                    <a class="learn-heading" href="{{ url_for('hub.group', slug=subject.slug) }}">{{ icon(subject) }} {{ subject.name }}</a>
+                    {% for game in nav_activities if game.group == subject.slug %}
+                      <a class="learn-item" href="{{ url_for(game.endpoint) }}">{{ icon(game) }} {{ game.name }}</a>
+                    {% endfor %}
+                  {% else %}
+                    <span class="learn-heading is-soon">{{ icon(subject) }} {{ subject.name }} <small>coming soon</small></span>
+                  {% endif %}
+                </div>
               {% endfor %}
-            {% else %}
-            <span class="dropdown-heading is-soon">{{ icon(subject) }} {{ subject.name }} <small>coming soon</small></span>
-            {% endif %}
-          {% endfor %}
+            </div>
+          </div>
+
+          <div class="learn-side" id="{{ prefix }}learn-brain" role="tabpanel" hidden>
+            {% for game in nav_activities if game.group == 'brain-games' %}
+              <a class="learn-item" href="{{ url_for(game.endpoint) }}">{{ icon(game) }} {{ game.name }}</a>
+            {% endfor %}
+          </div>
+
+          <div class="learn-side" id="{{ prefix }}learn-howto" role="tabpanel" hidden>
+            {# howto id comes from the blueprint name: word_wizard.game -> word-wizard #}
+            <div class="learn-columns">
+              {% for game in nav_activities %}
+                <button type="button" class="learn-item" onclick="openHowto('{{ game.endpoint.split('.')[0]|replace('_', '-') }}')">{{ icon(game) }} {{ game.name }}</button>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endmacro %}
+
+      {# Phones only: About, Learning and Bookshelf live in here #}
+      <details class="nav-dropdown nav-burger">
+        <summary class="nav-btn">☰ Menu</summary>
+        <div class="dropdown-menu burger-panel">
+          <a class="dropdown-item" href="{{ url_for('hub.about') }}">ℹ️ About</a>
+          <a class="dropdown-item" href="{{ url_for('bookshelf.shelf') }}">📕 Bookshelf</a>
+          <hr class="dropdown-divider">
+          <p class="burger-heading">🎒 Learning</p>
+          {{ learning_panel('m-', 'learn-panel--inline') }}
         </div>
       </details>
 
-      <details class="nav-dropdown">
-        <summary class="nav-btn">🎲 Brain Games</summary>
-        <div class="dropdown-menu">
-          {% for game in nav_activities if game.group == 'brain-games' %}
-          <a class="dropdown-item" href="{{ url_for(game.endpoint) }}">{{ icon(game) }} {{ game.name }}</a>
-          {% endfor %}
-        </div>
+      <details class="nav-dropdown learn-menu nav-wide">
+        <summary class="nav-btn">🎒 Learning</summary>
+        {{ learning_panel('', 'dropdown-menu') }}
       </details>
 
-      <a class="nav-btn shelf-btn" href="{{ url_for('bookshelf.shelf') }}">📕 Bookshelf</a>
-
-      <details class="nav-dropdown">
-        <summary class="nav-btn">❓ How to play</summary>
-        <div class="dropdown-menu">
-          {# howto id comes from the blueprint name: word_wizard.game -> word-wizard #}
-          {% for game in nav_activities %}
-          <button class="dropdown-item" onclick="openHowto('{{ game.endpoint.split('.')[0]|replace('_', '-') }}')">{{ icon(game) }} {{ game.name }}</button>
-          {% endfor %}
-        </div>
-      </details>
+      <a class="nav-btn shelf-btn nav-wide" href="{{ url_for('bookshelf.shelf') }}">📕 Bookshelf</a>
 
       {# who's playing + Puter voice status + log out #}
       <button class="nav-btn puter-btn" id="puter-btn" type="button" hidden
-              title="Sign in to Puter so the games can talk">🔇 Turn on voices</button>
-      <details class="nav-dropdown">
-        <summary class="nav-btn player-btn">👋 {{ g.child.name }}</summary>
+              aria-label="Voices are off — tap to turn them on"
+              title="Voices are off — tap to sign in to Puter so the games can talk">
+        {# Speaker icons drawn here so they look the same on every device #}
+        <svg class="speaker-icon speaker-icon--on" viewBox="0 0 24 24" aria-hidden="true">
+          <path class="speaker-body" d="M4 9h4l5-4v14l-5-4H4z"/>
+          <path class="speaker-wave" d="M16 9.5a3.5 3.5 0 0 1 0 5"/>
+          <path class="speaker-wave" d="M18.5 7a7 7 0 0 1 0 10"/>
+        </svg>
+        <svg class="speaker-icon speaker-icon--off" viewBox="0 0 24 24" aria-hidden="true">
+          <path class="speaker-body" d="M4 9h4l5-4v14l-5-4H4z"/>
+          <path class="speaker-line" d="M3 3l18 18"/>
+        </svg>
+      </button>
+      <details class="nav-dropdown player-menu">
+        <summary class="nav-btn player-btn">👋 <span class="player-name">{{ g.child.name }}</span></summary>
         <div class="dropdown-menu">
           <a class="dropdown-item" href="{{ url_for('hub.progress') }}">📊 My progress</a>
           <hr class="dropdown-divider">
@@ -408,18 +447,46 @@
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') closeHowto();
     });
+    // Learning menu: pick a tab on the left to show its list on the right.
+    // Hovering switches too on a computer; on phones it's a tap.
+    document.querySelectorAll('.learn-panel').forEach(panel => {
+      const tabs = panel.querySelectorAll('.learn-tab');
+      const show = tab => {
+        tabs.forEach(t => {
+          const on = t === tab;
+          t.classList.toggle('is-active', on);
+          t.setAttribute('aria-selected', on ? 'true' : 'false');
+          document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+        });
+      };
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => show(tab));
+        tab.addEventListener('mouseenter', () => {
+          if (window.matchMedia('(hover: hover)').matches) show(tab);
+        });
+      });
+    });
   </script>
 
   <script src="https://js.puter.com/v2/"></script>
   {% if g.child %}
   <script>
-    // Logged in to the site but not to Puter (e.g. Puter signed out on its own)?
-    // Show "Turn on voices" — signing in needs a tap because Puter opens a pop-up.
+    // Speaker button: 🔊 when Puter is signed in (voices on),
+    // 🔇 when it isn't. Tapping 🔇 signs in — it needs a tap because Puter opens a pop-up.
     (() => {
       const btn = document.getElementById('puter-btn');
       if (!btn || !window.puter) return;
-      const refresh = () => { btn.hidden = puter.auth.isSignedIn(); };
+      const refresh = () => {
+        const on = puter.auth.isSignedIn();
+        btn.classList.toggle('is-on', on);
+        const label = on ? 'Voices are on'
+                         : 'Voices are off — tap to turn them on';
+        btn.setAttribute('aria-label', label);
+        btn.title = on ? 'Voices are on' : 'Voices are off — tap to sign in to Puter so the games can talk';
+        btn.hidden = false;
+      };
       btn.addEventListener('click', async () => {
+        if (puter.auth.isSignedIn()) return;
         try { await puter.auth.signIn(); } catch (err) { console.warn('Puter sign-in cancelled', err); }
         refresh();
       });

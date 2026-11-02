@@ -94,7 +94,13 @@ async function loadPuzzle() {
   updateScore(0, 0);
 
   const topic = sel.value;
-  const res = await fetch(`${PUZZLE_URL}?topic=${encodeURIComponent(topic)}&mode=${currentMode}`);
+  // On phones, ask for a narrower puzzle so every square fits on screen (about 32px each)
+  let sizeParam = '';
+  if (window.innerWidth <= 640) {
+    const fit = Math.floor((window.innerWidth - 56) / 32);
+    sizeParam = `&max_cols=${Math.max(9, fit)}`;
+  }
+  const res = await fetch(`${PUZZLE_URL}?topic=${encodeURIComponent(topic)}&mode=${currentMode}${sizeParam}`);
   puzzle = await res.json();
 
   document.getElementById('loading').style.display = 'none';
@@ -107,6 +113,7 @@ async function loadPuzzle() {
 function renderGrid() {
   const tbl = document.getElementById('cw');
   tbl.innerHTML = '';
+  tbl.style.setProperty('--cw-cols', puzzle.cols);   // lets phones size the squares to fit
   const cellMap = {};
   puzzle.cells.forEach(cell => { cellMap[`${cell.r},${cell.c}`] = cell; });
   const numMap = {};

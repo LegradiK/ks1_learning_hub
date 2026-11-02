@@ -158,6 +158,7 @@ function renderGrid() {
   const tbl = document.getElementById('sd-grid');
   tbl.innerHTML = '';
   tbl.style.setProperty('--cell', CELL_SIZES[SIZE]);
+  tbl.style.setProperty('--sd-size', SIZE);   // lets phones fit the grid to the screen
 
   const { boxRows, boxCols } = puzzle;
 
