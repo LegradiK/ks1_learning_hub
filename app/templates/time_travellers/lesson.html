@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}{{ lesson.title }} — Time Travellers{% endblock %}
+{% block theme %}theme-history{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{{ url_for('time_travellers.index') }}#area-{{ lesson.area }}">← All lessons</a>
+
+<header class="game-header">
+  <span class="subject-badge" aria-hidden="true">{{ lesson.emoji }}</span>
+  <div>
+    <p class="tt-kicker">{{ lesson.area_name }} · {{ lesson.when }}</p>
+    <h1>{{ lesson.title }}</h1>
+  </div>
+</header>
+
+<ol class="tt-dots" id="dots" aria-label="Lesson progress"></ol>
+
+<article class="tt-stage" id="stage" aria-live="polite"></article>
+
+<div class="tt-nav" id="nav">
+  <button type="button" class="jelly-btn btn-quiet" id="prevBtn">◀ Back</button>
+  <button type="button" class="jelly-btn btn-quiet" id="readBtn">🔊 Read to me</button>
+  <button type="button" class="jelly-btn" id="nextBtn">Next ▶</button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='speech.js') }}"></script>
+<script>
+"use strict";
+
+const LESSON = {{ lesson | tojson }};
+const INDEX_URL = "{{ url_for('time_travellers.index') }}";
+const NEXT_URL = {{ (url_for('time_travellers.lesson', lesson_id=lesson.next_id) if lesson.next_id else None) | tojson }};
+
+const stage   = document.getElementById("stage");
+const dots    = document.getElementById("dots");
+const nav     = document.getElementById("nav");
+const prevBtn = document.getElementById("prevBtn");
+const nextBtn = document.getElementById("nextBtn");
+const readBtn = document.getElementById("readBtn");
+
+/* The lesson is a list of steps: story pages, key words, talk time,
+   one step per quiz question, then the finish card. */
+const steps = [
+  ...LESSON.pages.map(p => ({ kind: "page", page: p })),
+  { kind: "words" },
+  { kind: "talk" },
+  ...LESSON.quiz.map((q, i) => ({ kind: "quiz", q, i })),
+  { kind: "done" },
+];
+
+let at = 0;
+let firstTry = 0;          // quiz questions right first time
+let quizState = {};        // question index -> {tries, solved}
+let spokenText = "";       // what 🔊 reads for this step
+
+const el = (tag, cls, text) => {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+};
+
+function buildDots() {
+  dots.innerHTML = "";
+  steps.forEach((s, i) => {
+    const d = el("li", "tt-dot" + (s.kind === "quiz" ? " tt-dot--quiz" : ""));
+    d.title = s.kind === "quiz" ? "Quiz question" : "Page " + (i + 1);
+    dots.appendChild(d);
+  });
+}
+
+function paintDots() {
+  [...dots.children].forEach((d, i) => {
+    d.classList.toggle("is-current", i === at);
+    d.classList.toggle("is-past", i < at);
+  });
+}
+
+/* ---------------------------------------------------------------- steps */
+
+function showPage(p) {
+  stage.append(el("div", "tt-big-emoji", p.emoji), el("h2", "tt-heading", p.heading),
+               el("p", "tt-text", p.text));
+  spokenText = p.heading + ". " + p.text;
+  if (p.fact) {
+    const fact = el("aside", "tt-fact");
+    fact.append(el("strong", "tt-fact-label", "💡 Did you know?"), el("span", "", " " + p.fact));
+    stage.appendChild(fact);
+    spokenText += " Did you know? " + p.fact;
+  }
+}
+
+function showWords() {
+  stage.append(el("div", "tt-big-emoji", "📝"), el("h2", "tt-heading", "Key words"));
+  const list = el("dl", "tt-words");
+  LESSON.words.forEach(w => {
+    const item = el("div", "tt-word");
+    const term = el("dt", "tt-word-term");
+    const say = el("button", "tt-say", "🔊");
+    say.type = "button";
+    say.setAttribute("aria-label", "Say " + w.word);
+    say.onclick = () => speak(w.word + ". " + w.meaning);
+    term.append(say, document.createTextNode(" " + w.word));
+    item.append(term, el("dd", "tt-word-meaning", w.meaning));
+    list.appendChild(item);
+  });
+  stage.appendChild(list);
+  spokenText = "Key words. " + LESSON.words.map(w => w.word + ": " + w.meaning).join(". ");
+}
+
+function showTalk() {
+  stage.append(el("div", "tt-big-emoji", "💬"), el("h2", "tt-heading", "Talk about it"),
+               el("p", "tt-text tt-talk", LESSON.talk),
+               el("p", "tt-hint", "Talk with a grown-up, then press Next for the quiz! 🎯"));
+  spokenText = "Talk about it. " + LESSON.talk;
+}
+
+function showQuiz(step) {
+  const { q, i } = step;
+  const state = quizState[i] || (quizState[i] = { tries: 0, solved: false });
+
+  stage.append(el("p", "tt-kicker", `🎯 Quiz — question ${i + 1} of ${LESSON.quiz.length}`),
+               el("h2", "tt-heading", q.q));
+  const opts = el("div", "tt-options");
+  const why = el("p", "tt-why");
+  why.hidden = true;
+
+  q.options.forEach((text, n) => {
+    const b = el("button", "tt-option", text);
+    b.type = "button";
+    if (state.solved && n === q.answer) b.classList.add("is-right");
+    b.disabled = state.solved;
+    b.onclick = () => {
+      state.tries++;
+      if (n === q.answer) {
+        state.solved = true;
+        if (state.tries === 1) firstTry++;
+        b.classList.add("is-right");
+        opts.querySelectorAll(".tt-option").forEach(o => o.disabled = true);
+        why.textContent = "✅ " + q.why;
+        why.className = "tt-why is-right";
+        why.hidden = false;
+        speak("Well done! " + q.why);
+        nextBtn.disabled = false;
+        if (window.hubTrack) hubTrack.answer(true);
+      } else {
+        b.classList.add("is-wrong");
+        b.disabled = true;
+        why.textContent = "Not quite — have another go! 🤔";
+        why.className = "tt-why is-wrong";
+        why.hidden = false;
+        if (window.hubTrack) hubTrack.answer(false);
+      }
+    };
+    opts.appendChild(b);
+  });
+  stage.append(opts, why);
+  if (state.solved) { why.textContent = "✅ " + q.why; why.className = "tt-why is-right"; why.hidden = false; }
+  nextBtn.disabled = !state.solved;
+  spokenText = q.q + " " + q.options.join(", or ") + "?";
+}
+
+function showDone() {
+  const total = LESSON.quiz.length;
+  const ratio = firstTry / total;
+  const stars = ratio === 1 ? 3 : ratio >= 0.5 ? 2 : 1;
+  stage.append(el("div", "tt-big-emoji", "🏆"), el("h2", "tt-heading", "Time traveller, you did it!"),
+               el("div", "tt-stars", "★".repeat(stars) + "☆".repeat(3 - stars)),
+               el("p", "tt-text", `You got ${firstTry} out of ${total} right first time.`));
+
+  const actions = el("div", "tt-done-actions");
+  const again = el("button", "jelly-btn btn-quiet", "🔁 Try the quiz again");
+  again.type = "button";
+  again.onclick = () => { quizState = {}; firstTry = 0; go(steps.findIndex(s => s.kind === "quiz")); };
+  const home = el("a", "jelly-btn btn-quiet", "📚 All lessons");
+  home.href = INDEX_URL;
+  actions.append(again, home);
+  if (NEXT_URL) {
+    const next = el("a", "jelly-btn", "Next lesson: " + LESSON.next_title + " ▶");
+    next.href = NEXT_URL;
+    actions.appendChild(next);
+  }
+  stage.appendChild(actions);
+  spokenText = `Time traveller, you did it! You got ${firstTry} out of ${total} right first time.`;
+
+  // remember finished lessons on this device for the ✅ on the menu
+  try {
+    const done = JSON.parse(localStorage.getItem("tt-done") || "[]");
+    if (!done.includes(LESSON.id)) { done.push(LESSON.id); localStorage.setItem("tt-done", JSON.stringify(done)); }
+  } catch (e) { /* storage blocked — the tick just won't show */ }
+  if (window.hubTrack) hubTrack.win();
+}
+
+/* ---------------------------------------------------------------- moving */
+
+function go(n) {
+  at = Math.max(0, Math.min(steps.length - 1, n));
+  const step = steps[at];
+  if (window.speechSynthesis) speechSynthesis.cancel();
+  stage.innerHTML = "";
+  stage.className = "tt-stage tt-stage--" + step.kind;
+  nextBtn.disabled = false;
+
+  if (step.kind === "page") showPage(step.page);
+  else if (step.kind === "words") showWords();
+  else if (step.kind === "talk") showTalk();
+  else if (step.kind === "quiz") showQuiz(step);
+  else showDone();
+
+  prevBtn.disabled = at === 0;
+  nextBtn.hidden = step.kind === "done";
+  nextBtn.textContent = steps[at + 1] && steps[at + 1].kind === "quiz" && step.kind !== "quiz"
+    ? "Start the quiz ▶" : "Next ▶";
+  paintDots();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+prevBtn.onclick = () => go(at - 1);
+nextBtn.onclick = () => go(at + 1);
+readBtn.onclick = () => speak(spokenText);
+document.addEventListener("keydown", e => {
+  if (e.target.closest("input, textarea, select")) return;
+  if (e.key === "ArrowRight" && !nextBtn.disabled && !nextBtn.hidden) go(at + 1);
+  if (e.key === "ArrowLeft" && !prevBtn.disabled) go(at - 1);
+});
+
+buildDots();
+go(0);
+</script>
+{% endblock %}

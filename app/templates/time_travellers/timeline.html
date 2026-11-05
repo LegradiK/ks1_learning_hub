@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Timeline Challenge — Time Travellers{% endblock %}
+{% block theme %}theme-history{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{{ url_for('time_travellers.index') }}">← Time Travellers</a>
+
+<header class="game-header">
+  <span class="subject-badge" aria-hidden="true">📏</span>
+  <div>
+    <h1>Timeline Challenge</h1>
+    <p class="game-sub">Tap the events in order — the oldest first, the newest last!</p>
+  </div>
+  <div class="score-pill">🔥 <span id="streak">0</span> in a row</div>
+</header>
+
+<div class="lk-toolbar">
+  <div class="mode-toggle">
+    <button type="button" class="mode-btn active" id="btn-year1">📗 Year 1</button>
+    <button type="button" class="mode-btn" id="btn-year2">📘 Year 2</button>
+  </div>
+  <button type="button" class="jelly-btn btn-quiet" id="newBtn">🎲 New round</button>
+</div>
+
+<section class="lk-timeline" aria-label="Your timeline">
+  <p class="lk-end lk-end--old">⏳ Oldest</p>
+  <ol class="lk-slots" id="slots"></ol>
+  <p class="lk-end lk-end--new">Newest 🆕</p>
+</section>
+
+<h2 class="lk-pool-title">Events to place</h2>
+<div class="lk-pool" id="pool"></div>
+
+<div class="lk-nav">
+  <button type="button" class="jelly-btn btn-quiet" id="hintBtn">💡 Show the years</button>
+  <button type="button" class="jelly-btn" id="checkBtn">✅ Check</button>
+</div>
+
+<p class="lk-message" id="message" hidden></p>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='speech.js') }}"></script>
+<script>
+"use strict";
+
+const EVENTS = {{ events | tojson }};
+const LEVELS = {{ levels | tojson }};
+
+const slotsEl = document.getElementById("slots");
+const poolEl  = document.getElementById("pool");
+const message = document.getElementById("message");
+const checkBtn = document.getElementById("checkBtn");
+const hintBtn = document.getElementById("hintBtn");
+const streakEl = document.getElementById("streak");
+
+let level = "year1";
+let round = [];        // the events in this round (shuffled)
+let placed = [];       // slot index -> event or null
+let checked = false;   // after a correct check, the round is finished
+let showYears = false;
+let streak = 0;
+
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+function pickRound() {
+  const { cards, min_gap } = LEVELS[level];
+  // keep trying until the picked events are far enough apart
+  for (let tries = 0; tries < 200; tries++) {
+    const pick = shuffle([...EVENTS]).slice(0, cards).sort((a, b) => a.year - b.year);
+    if (pick.every((e, i) => i === 0 || e.year - pick[i - 1].year >= min_gap)) return shuffle(pick);
+  }
+  return shuffle([...EVENTS]).slice(0, cards);
+}
+
+function newRound() {
+  round = pickRound();
+  placed = new Array(round.length).fill(null);
+  checked = false;
+  showYears = false;
+  hintBtn.textContent = "💡 Show the years";
+  message.hidden = true;
+  render();
+}
+
+function card(e, where) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "lk-event";
+  b.innerHTML = "";
+  const emoji = document.createElement("span");
+  emoji.className = "lk-event-emoji";
+  emoji.textContent = e.emoji;
+  const label = document.createElement("span");
+  label.className = "lk-event-label";
+  label.textContent = e.label;
+  b.append(emoji, label);
+  if (showYears || checked) {
+    const yr = document.createElement("span");
+    yr.className = "lk-event-year";
+    yr.textContent = e.year;
+    b.appendChild(yr);
+  }
+  b.setAttribute("aria-label", e.label + (where === "pool" ? " — tap to place" : " — tap to take back"));
+  return b;
+}
+
+function render() {
+  slotsEl.innerHTML = "";
+  placed.forEach((e, i) => {
+    const li = document.createElement("li");
+    li.className = "lk-slot";
+    if (e) {
+      const b = card(e, "slot");
+      b.onclick = () => { if (checked) return; placed[i] = null; message.hidden = true; render(); };
+      li.appendChild(b);
+    } else {
+      const empty = document.createElement("span");
+      empty.className = "lk-slot-empty";
+      empty.textContent = i + 1;
+      li.appendChild(empty);
+    }
+    slotsEl.appendChild(li);
+  });
+
+  poolEl.innerHTML = "";
+  round.filter(e => !placed.includes(e)).forEach(e => {
+    const b = card(e, "pool");
+    b.onclick = () => {
+      const free = placed.indexOf(null);
+      if (free === -1) return;
+      placed[free] = e;
+      speak(e.label);
+      render();
+    };
+    poolEl.appendChild(b);
+  });
+  if (!poolEl.children.length) {
+    const p = document.createElement("p");
+    p.className = "lk-hint";
+    p.textContent = checked ? "🎉 All in order!" : "All placed — press ✅ Check!";
+    poolEl.appendChild(p);
+  }
+  checkBtn.disabled = checked || placed.includes(null);
+}
+
+function say(text, kind) {
+  message.textContent = text;
+  message.className = "lk-message is-" + kind;
+  message.hidden = false;
+}
+
+checkBtn.onclick = () => {
+  const right = placed.every((e, i) => i === 0 || placed[i - 1].year < e.year);
+  const slots = slotsEl.querySelectorAll(".lk-slot");
+  const sorted = [...round].sort((a, b) => a.year - b.year);
+  placed.forEach((e, i) => slots[i].classList.toggle("is-wrong", e !== sorted[i]));
+  if (window.hubTrack) hubTrack.answer(right);
+
+  if (right) {
+    checked = true;
+    streak++;
+    streakEl.textContent = streak;
+    render();
+    say("🎉 Brilliant! You put history in the right order! Press 🎲 New round to play again.", "right");
+    speak("Brilliant! You put history in the right order!");
+    if (window.hubTrack) hubTrack.win();
+  } else {
+    streak = 0;
+    streakEl.textContent = 0;
+    say("Not quite! The red ones are in the wrong place. Tap them to take them back and try again. 💡 Showing the years might help!", "wrong");
+  }
+};
+
+hintBtn.onclick = () => {
+  showYears = !showYears;
+  hintBtn.textContent = showYears ? "🙈 Hide the years" : "💡 Show the years";
+  render();
+};
+
+function setLevel(l) {
+  level = l;
+  document.getElementById("btn-year1").classList.toggle("active", l === "year1");
+  document.getElementById("btn-year2").classList.toggle("active", l === "year2");
+  newRound();
+}
+document.getElementById("btn-year1").onclick = () => setLevel("year1");
+document.getElementById("btn-year2").onclick = () => setLevel("year2");
+document.getElementById("newBtn").onclick = newRound;
+
+newRound();
+</script>
+{% endblock %}

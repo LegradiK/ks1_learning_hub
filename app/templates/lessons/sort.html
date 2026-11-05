@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}{{ sort_set.title }} — {{ subject.name }}{% endblock %}
+{% block theme %}{{ subject.theme }}{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{{ url_for(bp ~ '.index') }}">← {{ subject.name }}</a>
+
+<header class="game-header">
+  <span class="subject-badge" aria-hidden="true">{{ sort_set.emoji }}</span>
+  <div>
+    <h1>{{ sort_set.title }}</h1>
+    <p class="game-sub">{{ sort_set.question }}</p>
+  </div>
+  <div class="score-pill">⭐ <span id="score">0</span> / <span id="total">0</span></div>
+</header>
+
+<div class="lk-progress" aria-hidden="true"><div class="lk-progress-fill" id="progressFill"></div></div>
+
+<article class="lk-stage lk-stage--sort" id="stage">
+  <div class="lk-big-emoji" id="itemEmoji"></div>
+  <h2 class="lk-heading" id="itemText"></h2>
+  <div class="lk-sort-buttons" id="sortButtons">
+    {% for c in sort_set.categories %}
+    <button type="button" class="lk-sort lk-sort--{{ loop.index }}" data-key="{{ c.key }}">{{ c.emoji }} {{ c.label }}</button>
+    {% endfor %}
+  </div>
+  <p class="lk-why" id="feedback" hidden></p>
+</article>
+
+<div class="lk-nav">
+  <button type="button" class="jelly-btn btn-quiet" id="readBtn">🔊 Read to me</button>
+  <button type="button" class="jelly-btn" id="nextBtn" hidden>Next ▶</button>
+  <button type="button" class="jelly-btn" id="againBtn" hidden>🎲 Play again</button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='speech.js') }}"></script>
+<script>
+"use strict";
+
+const SET = {{ sort_set | tojson }};
+const ROUND = SET.round || 8;
+const CATS = Object.fromEntries(SET.categories.map(c => [c.key, c]));
+
+const $ = id => document.getElementById(id);
+const buttons = [...document.querySelectorAll(".lk-sort")];
+let round = [], at = 0, score = 0, answered = false;
+
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+function start() {
+  // share the round fairly between the categories, then mix them up
+  const per = Math.ceil(ROUND / SET.categories.length);
+  let pick = [];
+  SET.categories.forEach(c => {
+    pick = pick.concat(shuffle(SET.items.filter(i => i.category === c.key)).slice(0, per));
+  });
+  round = shuffle(pick).slice(0, ROUND);
+  at = 0; score = 0;
+  $("total").textContent = round.length;
+  $("againBtn").hidden = true;
+  $("sortButtons").hidden = false;
+  show();
+}
+
+function show() {
+  const item = round[at];
+  answered = false;
+  $("score").textContent = score;
+  $("itemEmoji").textContent = item.emoji;
+  $("itemText").textContent = item.text;
+  $("feedback").hidden = true;
+  $("nextBtn").hidden = true;
+  buttons.forEach(b => { b.disabled = false; b.classList.remove("is-right", "is-wrong"); });
+  $("progressFill").style.width = (100 * at / round.length) + "%";
+}
+
+function choose(btn) {
+  if (answered) return;
+  answered = true;
+  const item = round[at];
+  const right = btn.dataset.key === item.category;
+  if (right) score++;
+  $("score").textContent = score;
+  btn.classList.add(right ? "is-right" : "is-wrong");
+  buttons.forEach(b => {
+    b.disabled = true;
+    if (!right && b.dataset.key === item.category) b.classList.add("is-right");
+  });
+
+  const says = CATS[item.category].says;
+  const fb = $("feedback");
+  fb.textContent = (right ? `✅ Yes! ${says}.`
+                         : `🤔 Not quite — ${says.charAt(0).toLowerCase() + says.slice(1)}.`)
+                   + (item.why ? " " + item.why : "");
+  fb.className = "lk-why " + (right ? "is-right" : "is-wrong");
+  fb.hidden = false;
+  speak(fb.textContent.replace(/^\S+\s/, ""));
+  if (window.hubTrack) hubTrack.answer(right);
+
+  if (at + 1 < round.length) $("nextBtn").hidden = false;
+  else setTimeout(finish, 1800);
+}
+
+function finish() {
+  $("progressFill").style.width = "100%";
+  $("sortButtons").hidden = true;
+  $("feedback").hidden = true;
+  $("itemEmoji").textContent = "🏆";
+  $("itemText").textContent = `You sorted ${score} out of ${round.length} correctly!`;
+  speak($("itemText").textContent);
+  $("againBtn").hidden = false;
+  if (window.hubTrack) hubTrack.win();
+}
+
+buttons.forEach(b => b.onclick = () => choose(b));
+$("nextBtn").onclick = () => { at++; show(); };
+$("againBtn").onclick = start;
+$("readBtn").onclick = () => speak($("itemText").textContent);
+
+start();
+</script>
+{% endblock %}

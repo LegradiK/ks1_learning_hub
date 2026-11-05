@@ -51,7 +51,7 @@ GROUPS = {
         "name": "Science",
         "section": "subjects",
         "badge": "🔬",
-        "theme": "theme-letters",
+        "theme": "theme-science",
         "blurb": "Explore plants, animals, materials and seasons, "
                  "and find out how the world works!",
     },
@@ -59,7 +59,7 @@ GROUPS = {
         "name": "History",
         "section": "subjects",
         "badge": "🏰",
-        "theme": "theme-sudoku",
+        "theme": "theme-history",
         "blurb": "Travel back in time to meet famous people and discover "
                  "how life used to be!",
     },
@@ -67,7 +67,7 @@ GROUPS = {
         "name": "Online Safety",
         "section": "subjects",
         "badge": "🛡️",
-        "theme": "theme-money",
+        "theme": "theme-safety",
         "blurb": "Learn how to stay safe and kind online, and know when "
                  "to ask a grown-up for help!",
     },
@@ -110,6 +110,24 @@ ACTIVITIES = [
     {"name": "Clock Master", "group": "maths", "endpoint": "clock_master.game",
      "badge": "⏰", "theme": "theme-clock",
      "blurb": "Tick tock — can you read the clock?"},
+
+    # --- Science ---
+    {"name": "Science Explorers", "group": "science", "endpoint": "science_lab.index",
+     "badge": "🔬", "theme": "theme-science",
+     "blurb": "Plants, animals, materials and seasons — lessons, quizzes "
+              "and sorting games!"},
+
+    # --- History ---
+    {"name": "Time Travellers", "group": "history", "endpoint": "time_travellers.index",
+     "badge": "🕰️", "theme": "theme-history",
+     "blurb": "Lessons, quizzes and timeline games — from the Great Fire of London "
+              "to the Moon landing!"},
+
+    # --- Online safety ---
+    {"name": "Safe Surfers", "group": "online-safety", "endpoint": "online_safety.index",
+     "badge": "🏄", "theme": "theme-safety",
+     "blurb": "Learn to stay safe, private and kind online — and who to "
+              "tell if something worries you."},
 
     # --- Brain games ---
     {"name": "Sudoku", "group": "brain-games", "endpoint": "sudoku.game",

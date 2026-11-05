@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}{{ subject.name }}{% endblock %}
+{% block theme %}{{ subject.theme }}{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{{ url_for('hub.group', slug=subject.group) }}">← Back</a>
+
+<header class="game-header">
+  <span class="subject-badge" aria-hidden="true">{{ subject.badge }}</span>
+  <div>
+    <h1>{{ subject.name }}</h1>
+    <p class="game-sub">{{ subject.tagline }}</p>
+  </div>
+  <div class="score-pill lk-done-pill"><span id="doneCount">0</span> / {{ total }} lessons done ✅</div>
+</header>
+
+{% if games %}
+<section class="lk-area">
+  <h2 class="lk-area-title">🎯 Practice Games</h2>
+  <div class="lk-card-grid">
+    {% for game in games %}
+    <a class="lk-card lk-card--game" href="{{ url_for(game.endpoint, **game.args) }}">
+      <span class="lk-card-emoji" aria-hidden="true">{{ game.emoji }}</span>
+      <span class="lk-card-title">{{ game.title }}</span>
+      <span class="lk-card-blurb">{{ game.blurb }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% for slug, area, lessons in areas %}
+<section class="lk-area" id="area-{{ slug }}">
+  <h2 class="lk-area-title">{{ area.emoji }} {{ area.name }}</h2>
+  <p class="lk-area-blurb">{{ area.blurb }}
+    <span class="lk-curriculum" title="Where this comes from in the curriculum">For grown-ups: {{ area.curriculum }}</span>
+  </p>
+  <div class="lk-card-grid">
+    {% for l in lessons %}
+    <a class="lk-card" href="{{ url_for(bp ~ '.lesson', lesson_id=l.id) }}" data-lesson="{{ l.id }}">
+      <span class="lk-card-tick" aria-hidden="true">✅</span>
+      <span class="lk-card-emoji" aria-hidden="true">{{ l.emoji }}</span>
+      <span class="lk-card-title">{{ l.title }}</span>
+      <span class="lk-card-tag">{{ l.tag }}</span>
+      <span class="lk-card-blurb">{{ l.blurb }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Lessons finished on this device get a tick (saved by lessons/lesson.html)
+  (() => {
+    let done = [];
+    try { done = JSON.parse(localStorage.getItem({{ (bp ~ '-done') | tojson }}) || '[]'); } catch (e) {}
+    let count = 0;
+    document.querySelectorAll('.lk-card[data-lesson]').forEach(card => {
+      if (done.includes(card.dataset.lesson)) { card.classList.add('is-done'); count++; }
+    });
+    document.getElementById('doneCount').textContent = count;
+  })();
+</script>
+{% endblock %}

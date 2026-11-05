@@ -56,6 +56,9 @@ def create_app(test_config=None):
     from app.story_detective import bp as story_detective_bp
     from app.spelling_master import bp as spelling_master_bp
     from app.bookshelf import bp as bookshelf_bp
+    from app.time_travellers import bp as time_travellers_bp
+    from app.science_lab import bp as science_lab_bp
+    from app.online_safety import bp as online_safety_bp
 
     app.register_blueprint(auth_bp)                                   # /login, /logout
     app.register_blueprint(hub_bp)                                    # "/"
@@ -70,6 +73,9 @@ def create_app(test_config=None):
     app.register_blueprint(story_detective_bp, url_prefix="/story-detective")
     app.register_blueprint(spelling_master_bp, url_prefix="/spelling-master")
     app.register_blueprint(bookshelf_bp, url_prefix="/bookshelf")
+    app.register_blueprint(time_travellers_bp, url_prefix="/time-travellers")
+    app.register_blueprint(science_lab_bp, url_prefix="/science")
+    app.register_blueprint(online_safety_bp, url_prefix="/online-safety")
 
     with app.app_context():
         from app import models  # noqa: F401  (so create_all knows the tables)

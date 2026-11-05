@@ -54,6 +54,7 @@ def create_app(test_config=None):
     from app.phonics_fox import bp as phonics_fox_bp
     from app.story_detective import bp as story_detective_bp
     from app.spelling_master import bp as spelling_master_bp
+    from app.time_travellers import bp as time_travellers_bp
     from app.bookshelf import bp as bookshelf_bp
 
     app.register_blueprint(auth_bp)                                   # /login, /logout
@@ -68,6 +69,7 @@ def create_app(test_config=None):
     app.register_blueprint(phonics_fox_bp, url_prefix="/phonics-fox")
     app.register_blueprint(story_detective_bp, url_prefix="/story-detective")
     app.register_blueprint(spelling_master_bp, url_prefix="/spelling-master")
+    app.register_blueprint(time_travellers_bp, url_prefix="/time-traveller")
     app.register_blueprint(bookshelf_bp, url_prefix="/bookshelf")
 
     with app.app_context():

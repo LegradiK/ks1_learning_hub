@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Time Travellers — History{% endblock %}
+{% block theme %}theme-history{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{{ url_for('hub.group', slug='history') }}">← Back</a>
+
+<header class="game-header">
+  <span class="subject-badge" aria-hidden="true">🕰️</span>
+  <div>
+    <h1>Time Travellers</h1>
+    <p class="game-sub">Jump into the time machine — pick a lesson, then try the quiz!</p>
+  </div>
+  <div class="score-pill tt-done-pill"><span id="doneCount">0</span> / {{ total }} lessons done ✅</div>
+</header>
+
+<section class="tt-area">
+  <h2 class="tt-area-title">🎯 Practice Games</h2>
+  <div class="tt-card-grid">
+    <a class="tt-card tt-card--game" href="{{ url_for('time_travellers.timeline') }}">
+      <span class="tt-card-emoji" aria-hidden="true">📏</span>
+      <span class="tt-card-title">Timeline Challenge</span>
+      <span class="tt-card-blurb">Put famous events in order, from oldest to newest.</span>
+    </a>
+    <a class="tt-card tt-card--game" href="{{ url_for('time_travellers.then_or_now') }}">
+      <span class="tt-card-emoji" aria-hidden="true">🔄</span>
+      <span class="tt-card-title">Then or Now?</span>
+      <span class="tt-card-blurb">Is it from long ago, or from today? You decide!</span>
+    </a>
+  </div>
+</section>
+
+{% for slug, area, lessons in areas %}
+<section class="tt-area" id="area-{{ slug }}">
+  <h2 class="tt-area-title">{{ area.emoji }} {{ area.name }}</h2>
+  <p class="tt-area-blurb">{{ area.blurb }}
+    <span class="tt-curriculum" title="National curriculum strand">For grown-ups: {{ area.curriculum }}</span>
+  </p>
+  <div class="tt-card-grid">
+    {% for l in lessons %}
+    <a class="tt-card" href="{{ url_for('time_travellers.lesson', lesson_id=l.id) }}" data-lesson="{{ l.id }}">
+      <span class="tt-card-tick" aria-hidden="true">✅</span>
+      <span class="tt-card-emoji" aria-hidden="true">{{ l.emoji }}</span>
+      <span class="tt-card-title">{{ l.title }}</span>
+      <span class="tt-card-when">{{ l.when }}</span>
+      <span class="tt-card-blurb">{{ l.blurb }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Lessons finished on this device get a tick (saved by lesson.html)
+  (() => {
+    let done = [];
+    try { done = JSON.parse(localStorage.getItem('tt-done') || '[]'); } catch (e) {}
+    let count = 0;
+    document.querySelectorAll('.tt-card[data-lesson]').forEach(card => {
+      if (done.includes(card.dataset.lesson)) { card.classList.add('is-done'); count++; }
+    });
+    document.getElementById('doneCount').textContent = count;
+  })();
+</script>
+{% endblock %}

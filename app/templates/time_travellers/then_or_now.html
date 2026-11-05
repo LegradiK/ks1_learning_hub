@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Then or Now? — Time Travellers{% endblock %}
+{% block theme %}theme-history{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{{ url_for('time_travellers.index') }}">← Time Travellers</a>
+
+<header class="game-header">
+  <span class="subject-badge" aria-hidden="true">🔄</span>
+  <div>
+    <h1>Then or Now?</h1>
+    <p class="game-sub">Is it from long ago, or something we do today?</p>
+  </div>
+  <div class="score-pill">⭐ <span id="score">0</span> / <span id="total">0</span></div>
+</header>
+
+<div class="tt-progress" aria-hidden="true"><div class="tt-progress-fill" id="progressFill"></div></div>
+
+<article class="tt-stage tt-stage--sort" id="stage">
+  <div class="tt-big-emoji" id="itemEmoji"></div>
+  <h2 class="tt-heading" id="itemText"></h2>
+  <div class="tt-sort-buttons" id="sortButtons">
+    <button type="button" class="tt-sort tt-sort--then" id="thenBtn">📜 Long ago</button>
+    <button type="button" class="tt-sort tt-sort--now" id="nowBtn">📱 Today</button>
+  </div>
+  <p class="tt-why" id="feedback" hidden></p>
+</article>
+
+<div class="tt-nav">
+  <button type="button" class="jelly-btn btn-quiet" id="readBtn">🔊 Read to me</button>
+  <button type="button" class="jelly-btn" id="nextBtn" hidden>Next ▶</button>
+  <button type="button" class="jelly-btn" id="againBtn" hidden>🎲 Play again</button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='speech.js') }}"></script>
+<script>
+"use strict";
+
+const ITEMS = {{ items | tojson }};
+const ROUND = {{ round_size }};
+
+const $ = id => document.getElementById(id);
+let round = [], at = 0, score = 0, answered = false;
+
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+function start() {
+  // half "then", half "now", mixed up
+  const then = shuffle(ITEMS.filter(i => i.then)).slice(0, Math.ceil(ROUND / 2));
+  const now  = shuffle(ITEMS.filter(i => !i.then)).slice(0, Math.floor(ROUND / 2));
+  round = shuffle([...then, ...now]);
+  at = 0; score = 0;
+  $("total").textContent = round.length;
+  $("againBtn").hidden = true;
+  $("sortButtons").hidden = false;
+  show();
+}
+
+function show() {
+  const item = round[at];
+  answered = false;
+  $("score").textContent = score;
+  $("itemEmoji").textContent = item.emoji;
+  $("itemText").textContent = item.text;
+  $("feedback").hidden = true;
+  $("nextBtn").hidden = true;
+  $("thenBtn").disabled = $("nowBtn").disabled = false;
+  $("thenBtn").className = "tt-sort tt-sort--then";
+  $("nowBtn").className = "tt-sort tt-sort--now";
+  $("progressFill").style.width = (100 * at / round.length) + "%";
+}
+
+function choose(saidThen) {
+  if (answered) return;
+  answered = true;
+  const item = round[at];
+  const right = saidThen === item.then;
+  if (right) score++;
+  $("score").textContent = score;
+  $(saidThen ? "thenBtn" : "nowBtn").classList.add(right ? "is-right" : "is-wrong");
+  $("thenBtn").disabled = $("nowBtn").disabled = true;
+
+  const answer = item.then ? "long ago" : "today";
+  const fb = $("feedback");
+  fb.textContent = right ? `✅ Yes! That's from ${answer}.` : `🤔 Not quite — that's from ${answer}.`;
+  fb.className = "tt-why " + (right ? "is-right" : "is-wrong");
+  fb.hidden = false;
+  speak(fb.textContent.replace(/^\S+\s/, ""));
+  if (window.hubTrack) hubTrack.answer(right);
+
+  if (at + 1 < round.length) $("nextBtn").hidden = false;
+  else setTimeout(finish, 1500);
+}
+
+function finish() {
+  $("progressFill").style.width = "100%";
+  $("sortButtons").hidden = true;
+  $("itemEmoji").textContent = "🏆";
+  $("itemText").textContent = `You sorted ${score} out of ${round.length} correctly!`;
+  $("againBtn").hidden = false;
+  if (window.hubTrack) hubTrack.win();
+}
+
+$("thenBtn").onclick = () => choose(true);
+$("nowBtn").onclick = () => choose(false);
+$("nextBtn").onclick = () => { at++; show(); };
+$("againBtn").onclick = start;
+$("readBtn").onclick = () => speak($("itemText").textContent);
+
+start();
+</script>
+{% endblock %}
