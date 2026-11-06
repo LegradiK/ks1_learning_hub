@@ -60,6 +60,7 @@ def create_app(test_config=None):
     from app.science_lab import bp as science_lab_bp
     from app.online_safety import bp as online_safety_bp
 
+
     app.register_blueprint(auth_bp)                                   # /login, /logout
     app.register_blueprint(hub_bp)                                    # "/"
     app.register_blueprint(letter_quest_bp, url_prefix="/letter-quest")
@@ -74,7 +75,7 @@ def create_app(test_config=None):
     app.register_blueprint(spelling_master_bp, url_prefix="/spelling-master")
     app.register_blueprint(bookshelf_bp, url_prefix="/bookshelf")
     app.register_blueprint(time_travellers_bp, url_prefix="/time-travellers")
-    app.register_blueprint(science_lab_bp, url_prefix="/science")
+    app.register_blueprint(science_lab_bp, url_prefix="/science-lab")
     app.register_blueprint(online_safety_bp, url_prefix="/online-safety")
 
     with app.app_context():
